@@ -38,8 +38,8 @@ def get_scores(sports_config: dict) -> list:
             competition = event.get("competitions", [{}])[0]
             competitors = competition.get("competitors", [])
 
-            abbrevs = {c["team"]["abbreviation"].upper() for c in competitors if "team" in c}
-            names = {c["team"]["name"].lower() for c in competitors if "team" in c}
+            abbrevs = {c["team"].get("abbreviation", "").upper() for c in competitors if "team" in c}
+            names = {c["team"].get("name", "").lower() for c in competitors if "team" in c}
 
             match = any(t.upper() in abbrevs or t.lower() in names for t in teams)
             if not match:
