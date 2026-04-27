@@ -97,3 +97,38 @@ def test_get_forecast_returns_none_on_error():
     resp_lib.add(resp_lib.GET, FORECAST_URL, body=ConnectionError("network error"))
     result = w.get_forecast(45.52, -122.68, "imperial")
     assert result is None
+
+# ── Quote ─────────────────────────────────────────────────────────────────────
+
+QUOTE_URL = "https://zenquotes.io/api/today"
+QUOTE_RESPONSE = [{"q": "The secret of getting ahead is getting started.", "a": "Mark Twain", "h": ""}]
+
+
+@resp_lib.activate
+def test_get_quote_returns_text_and_author():
+    from app.providers import quote as q
+    q._cache["date"] = None
+    resp_lib.add(resp_lib.GET, QUOTE_URL, json=QUOTE_RESPONSE, status=200)
+    result = q.get_quote()
+    assert result is not None
+    assert result["text"] == "The secret of getting ahead is getting started."
+    assert result["author"] == "Mark Twain"
+
+
+@resp_lib.activate
+def test_get_quote_uses_daily_cache():
+    from app.providers import quote as q
+    from datetime import date
+    q._cache["date"] = date.today().isoformat()
+    q._cache["data"] = {"text": "cached quote", "author": "Cache Author"}
+    # No mock registered — any HTTP would raise ConnectionError
+    result = q.get_quote()
+    assert result["text"] == "cached quote"
+
+
+@resp_lib.activate
+def test_get_quote_returns_none_on_error():
+    from app.providers import quote as q
+    q._cache["date"] = None
+    resp_lib.add(resp_lib.GET, QUOTE_URL, body=ConnectionError("network"))
+    assert q.get_quote() is None
