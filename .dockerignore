@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+.venv/
+*.egg-info/
+.git/
+.vscode/
+.idea/
+*.swp
+config/

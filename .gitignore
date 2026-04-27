@@ -13,3 +13,6 @@ config/
 .vscode/
 .idea/
 *.swp
+
+*.log
+.pytest_cache/
