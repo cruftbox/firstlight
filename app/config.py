@@ -44,14 +44,14 @@ DEFAULT_CONFIG = {
 def load() -> dict:
     if not CONFIG_PATH.exists():
         return copy.deepcopy(DEFAULT_CONFIG)
-    with open(CONFIG_PATH) as f:
+    with open(CONFIG_PATH, encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
     return _deep_merge(DEFAULT_CONFIG, data)
 
 
 def save(config: dict) -> None:
     CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(CONFIG_PATH, "w") as f:
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
         yaml.dump(config, f, default_flow_style=False)
 
 

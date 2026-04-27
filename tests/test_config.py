@@ -4,10 +4,17 @@ from pathlib import Path
 from unittest.mock import patch
 from importlib import reload
 
+import app.config as cfg_mod
+
+
+@pytest.fixture(autouse=True)
+def reset_config_module():
+    yield
+    reload(cfg_mod)
+
 
 def test_load_returns_defaults_when_no_file(tmp_path):
     with patch("app.config.CONFIG_PATH", tmp_path / "missing.yaml"):
-        import app.config as cfg_mod
         reload(cfg_mod)
         cfg = cfg_mod.load()
     assert cfg["firstlight"]["setup_complete"] is False
@@ -26,7 +33,6 @@ def test_load_merges_partial_config(tmp_path):
         "location": {"city": "Portland", "lat": 45.52, "lon": -122.68},
     }))
     with patch("app.config.CONFIG_PATH", config_file):
-        import app.config as cfg_mod
         reload(cfg_mod)
         cfg = cfg_mod.load()
     assert cfg["firstlight"]["setup_complete"] is True
@@ -39,7 +45,6 @@ def test_load_merges_partial_config(tmp_path):
 def test_save_and_reload(tmp_path):
     config_file = tmp_path / "firstlight.yaml"
     with patch("app.config.CONFIG_PATH", config_file):
-        import app.config as cfg_mod
         reload(cfg_mod)
         cfg = cfg_mod.load()
         cfg["firstlight"]["print_time"] = "08:15"
@@ -51,7 +56,6 @@ def test_save_and_reload(tmp_path):
 def test_save_creates_parent_dirs(tmp_path):
     config_file = tmp_path / "nested" / "dir" / "firstlight.yaml"
     with patch("app.config.CONFIG_PATH", config_file):
-        import app.config as cfg_mod
         reload(cfg_mod)
         cfg = cfg_mod.load()
         cfg_mod.save(cfg)
