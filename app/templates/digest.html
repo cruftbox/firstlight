@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="static/css/digest.css">
+</head>
+<body class="digest {{ 'a4' if config.firstlight.paper_size == 'a4' else 'letter' }}">
+
+  <header>
+    <div class="header-bar">
+      <span class="title">FIRSTLIGHT</span>
+      <span class="date-str">{{ date_str }}</span>
+    </div>
+    {% if quote %}
+    <div class="quote-line">"{{ quote.text }}" — {{ quote.author }}</div>
+    {% endif %}
+  </header>
+
+  <section class="weather-section">
+    {% if weather %}
+    <div class="weather-main">
+      ☀ {{ weather.temp }}°&nbsp;&nbsp;
+      {{ config.location.city }}&nbsp;&nbsp;&nbsp;
+      High {{ weather.high }}° / Low {{ weather.low }}°&nbsp;&nbsp;&nbsp;
+      {{ weather.condition }}
+    </div>
+    <div class="hourly-strip">
+      {% for h in weather.hourly %}
+      <span class="hour-chip">
+        {{ (h.hour % 12) or 12 }}{{ 'am' if h.hour < 12 else 'pm' }} {{ h.temp }}°
+      </span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+
+  <div class="two-col">
+    <section class="calendar-section">
+      <h2>CALENDAR TODAY</h2>
+      {% for event in calendar %}
+      <div class="cal-event">
+        <span class="cal-time">{{ event.time }}</span>
+        <span class="cal-title">{{ event.title }}</span>
+      </div>
+      {% else %}
+      <div class="empty">No events today</div>
+      {% endfor %}
+    </section>
+
+    <section class="todo-section">
+      <h2>TO-DO</h2>
+      {% for item in todos %}
+      <div class="todo-item">☐ {{ item.text }}</div>
+      {% else %}
+      <div class="empty">Nothing on the list</div>
+      {% endfor %}
+    </section>
+  </div>
+
+  {% if sports %}
+  <section class="sports-section">
+    <h2>SPORTS</h2>
+    {% for score in sports %}
+    <div class="score-item">{{ score.emoji }} {{ score.text }}</div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if news %}
+  <section class="news-section">
+    <h2>NEWS</h2>
+    {% for item in news %}
+    <div class="news-item">
+      • {{ item.title }}
+      {% if item.label %}<span class="news-label">[{{ item.label }}]</span>{% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+</body>
+</html>
