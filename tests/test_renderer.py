@@ -1,4 +1,6 @@
 import pytest
+from datetime import date, timedelta
+from unittest.mock import patch as _arch_patch
 
 
 MINIMAL_CONFIG = {
@@ -79,3 +81,46 @@ def test_preview_route_returns_pdf():
     assert resp.status_code == 200
     assert resp.content_type == "application/pdf"
     assert resp.data[:4] == b"%PDF"
+
+
+# ── Archive ───────────────────────────────────────────────────────────────────
+
+
+def test_archive_save_creates_file(tmp_path):
+    import app.print.archive as arch
+    with _arch_patch.object(arch, "ARCHIVE_DIR", tmp_path):
+        arch.save(b"%PDF-test", date(2026, 4, 28))
+    assert (tmp_path / "2026-04-28.pdf").exists()
+    assert (tmp_path / "2026-04-28.pdf").read_bytes() == b"%PDF-test"
+
+
+def test_archive_cleanup_removes_old(tmp_path):
+    (tmp_path / "2026-01-01.pdf").write_bytes(b"old")
+    (tmp_path / "2026-04-28.pdf").write_bytes(b"new")
+    import app.print.archive as arch
+    with _arch_patch.object(arch, "ARCHIVE_DIR", tmp_path):
+        arch.cleanup(retention_days=30)
+    assert not (tmp_path / "2026-01-01.pdf").exists()
+    assert (tmp_path / "2026-04-28.pdf").exists()
+
+
+def test_archive_list_all_sorted_newest_first(tmp_path):
+    (tmp_path / "2026-04-26.pdf").write_bytes(b"a")
+    (tmp_path / "2026-04-28.pdf").write_bytes(b"b")
+    (tmp_path / "2026-04-27.pdf").write_bytes(b"c")
+    import app.print.archive as arch
+    with _arch_patch.object(arch, "ARCHIVE_DIR", tmp_path):
+        files = arch.list_all()
+    assert files[0]["filename"] == "2026-04-28.pdf"
+    assert files[1]["filename"] == "2026-04-27.pdf"
+    assert files[2]["filename"] == "2026-04-26.pdf"
+    assert "size_kb" in files[0]
+    assert "date" in files[0]
+
+
+def test_archive_list_all_empty_when_no_dir(tmp_path):
+    missing = tmp_path / "no_such_dir"
+    import app.print.archive as arch
+    with _arch_patch.object(arch, "ARCHIVE_DIR", missing):
+        files = arch.list_all()
+    assert files == []
