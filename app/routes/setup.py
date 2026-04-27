@@ -1,5 +1,15 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
+from datetime import date
+import pytz
 from app.config import load as load_config, save as save_config
+
+
+def _safe_int(val, default: int) -> int:
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return default
+
 
 setup_bp = Blueprint("setup", __name__, url_prefix="/setup")
 
@@ -38,6 +48,8 @@ def step2():
                 cfg["location"]["lon"] = result["lon"]
                 save_config(cfg)
                 return redirect(url_for("setup.step3"))
+            else:
+                error = "Location search expired. Please search again."
     return render_template("setup/step2_location.html", config=cfg,
                            result=geocode_result, error=error)
 
@@ -51,7 +63,6 @@ def step3():
         cfg["weather"]["units"] = request.form.get("units", "imperial")
         save_config(cfg)
         return redirect(url_for("setup.step4"))
-    import pytz
     return render_template("setup/step3_printtime.html", config=cfg,
                            timezones=pytz.all_timezones)
 
@@ -94,6 +105,7 @@ def step6():
         if creds_json:
             from pathlib import Path
             creds_path = Path("/app/config/google_credentials.json")
+            creds_path.parent.mkdir(parents=True, exist_ok=True)
             creds_path.write_text(creds_json, encoding="utf-8")
             cfg["calendar"]["enabled"] = True
             save_config(cfg)
@@ -124,8 +136,8 @@ def step8():
             for u, l in zip(urls, labels)
             if u.strip()
         ]
-        cfg["news"]["max_items"] = int(request.form.get("max_items", 10))
-        cfg["news"]["max_age_hours"] = int(request.form.get("max_age_hours", 24))
+        cfg["news"]["max_items"] = _safe_int(request.form.get("max_items"), 10)
+        cfg["news"]["max_age_hours"] = _safe_int(request.form.get("max_age_hours"), 24)
         save_config(cfg)
         return redirect(url_for("setup.step9"))
     return render_template("setup/step8_news.html", config=cfg)
@@ -139,7 +151,7 @@ def step9():
             return redirect(url_for("setup.step10"))
         cfg["email"]["enabled"] = True
         cfg["email"]["smtp_host"] = request.form.get("smtp_host", "")
-        cfg["email"]["smtp_port"] = int(request.form.get("smtp_port", 587))
+        cfg["email"]["smtp_port"] = _safe_int(request.form.get("smtp_port"), 587)
         cfg["email"]["smtp_user"] = request.form.get("smtp_user", "")
         cfg["email"]["smtp_password"] = request.form.get("smtp_password", "")
         cfg["email"]["from_address"] = request.form.get("from_address", "")
@@ -151,13 +163,11 @@ def step9():
 
 @setup_bp.route("/9/test-email", methods=["POST"])
 def test_email():
-    from flask import jsonify
     from app.print.emailer import send
-    from datetime import date
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     email_config = {
         "smtp_host": data.get("smtp_host", ""),
-        "smtp_port": int(data.get("smtp_port", 587)),
+        "smtp_port": int(data.get("smtp_port") or 587),
         "smtp_user": data.get("smtp_user", ""),
         "smtp_password": data.get("smtp_password", ""),
         "from_address": data.get("from_address", ""),
