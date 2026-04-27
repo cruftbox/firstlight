@@ -20,8 +20,8 @@ def get_news(feeds: list, max_age_hours: int = 24, max_items: int = 10) -> list:
             feed = feedparser.parse(url)
         except Exception:
             continue
-        if feed.get("bozo") and not feed.get("entries"):
-            logging.warning("Feed error for %s: %s", url, feed.get("bozo_exception", "unknown"))
+        if getattr(feed, "bozo", False) and not getattr(feed, "entries", []):
+            logging.warning("Feed error for %s: %s", url, getattr(feed, "bozo_exception", "unknown"))
             continue
 
         for entry in feed.entries:

@@ -225,3 +225,80 @@ def test_get_news_dedup_does_not_suppress_fresh_entry_when_stale_seen_first():
         )
     assert len(items) == 1
     assert items[0]["label"] == "B"
+
+# ── Sports ────────────────────────────────────────────────────────────────────
+
+MLB_URL = "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard"
+
+MLB_FINAL = {
+    "events": [{
+        "name": "Dodgers at Giants",
+        "date": "2026-04-28T02:10Z",
+        "status": {"type": {"name": "STATUS_FINAL", "completed": True}},
+        "competitions": [{
+            "competitors": [
+                {"team": {"name": "Dodgers", "abbreviation": "LAD"}, "score": "4", "homeAway": "home"},
+                {"team": {"name": "Giants", "abbreviation": "SF"}, "score": "2", "homeAway": "away"},
+            ]
+        }]
+    }]
+}
+
+MLB_UPCOMING = {
+    "events": [{
+        "name": "Dodgers at Giants",
+        "date": "2026-04-28T20:10Z",
+        "status": {"type": {"name": "STATUS_SCHEDULED", "completed": False}},
+        "competitions": [{
+            "competitors": [
+                {"team": {"name": "Dodgers", "abbreviation": "LAD"}, "score": "0", "homeAway": "home"},
+                {"team": {"name": "Giants", "abbreviation": "SF"}, "score": "0", "homeAway": "away"},
+            ]
+        }]
+    }]
+}
+
+EMPTY_SPORTS = {"mlb": [], "nfl": [], "nba": [], "wnba": [], "mls": [], "premier_league": []}
+
+
+@resp_lib.activate
+def test_sports_final_game():
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    from app.providers.sports import get_scores
+    results = get_scores({**EMPTY_SPORTS, "mlb": ["LAD"]})
+    assert len(results) == 1
+    assert "Final" in results[0]["text"]
+    assert "Dodgers" in results[0]["text"]
+    assert results[0]["emoji"] == "⚾"
+
+
+@resp_lib.activate
+def test_sports_upcoming_game():
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_UPCOMING, status=200)
+    from app.providers.sports import get_scores
+    results = get_scores({**EMPTY_SPORTS, "mlb": ["LAD"]})
+    assert len(results) == 1
+    assert "Dodgers" in results[0]["text"]
+    assert "Final" not in results[0]["text"]
+
+
+@resp_lib.activate
+def test_sports_no_matching_team():
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    from app.providers.sports import get_scores
+    results = get_scores({**EMPTY_SPORTS, "mlb": ["Yankees"]})
+    assert results == []
+
+
+def test_sports_empty_config():
+    from app.providers.sports import get_scores
+    results = get_scores(EMPTY_SPORTS)
+    assert results == []  # no HTTP made — nothing to request
+
+
+@resp_lib.activate
+def test_sports_network_error():
+    resp_lib.add(resp_lib.GET, MLB_URL, body=ConnectionError("network"))
+    from app.providers.sports import get_scores
+    results = get_scores({**EMPTY_SPORTS, "mlb": ["LAD"]})
+    assert results == []
