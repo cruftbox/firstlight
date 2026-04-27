@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -9,7 +10,11 @@ TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
 def render_digest(data: dict, config: dict) -> bytes:
     """Render digest data dict to PDF bytes via Jinja2 + WeasyPrint."""
-    tz = pytz.timezone(config["firstlight"]["timezone"])
+    try:
+        tz = pytz.timezone(config["firstlight"]["timezone"])
+    except Exception:
+        logging.warning("Unknown timezone %r, falling back to UTC", config["firstlight"]["timezone"])
+        tz = pytz.utc
     now = datetime.now(tz)
     date_str = now.strftime("%A, %B %d, %Y").replace(" 0", " ")
 

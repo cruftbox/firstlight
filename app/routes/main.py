@@ -12,12 +12,16 @@ def index():
 
 @main_bp.route("/preview")
 def preview():
-    from app.print.pipeline import collect_data
-    from app.print.renderer import render_digest
-    cfg = load_config()
-    data = collect_data(cfg)
-    pdf_bytes = render_digest(data, cfg)
-    return Response(pdf_bytes, mimetype="application/pdf")
+    try:
+        from app.print.pipeline import collect_data
+        from app.print.renderer import render_digest
+        cfg = load_config()
+        data = collect_data(cfg)
+        pdf_bytes = render_digest(data, cfg)
+        return Response(pdf_bytes, mimetype="application/pdf")
+    except Exception as e:
+        logging.exception("Preview failed")
+        return Response(f"Preview error: {e}", status=500, mimetype="text/plain")
 
 
 @main_bp.route("/print", methods=["POST"])

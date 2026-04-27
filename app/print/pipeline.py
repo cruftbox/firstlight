@@ -11,22 +11,40 @@ def collect_data(config: dict) -> dict:
     loc = config["location"]
     weather_data = None
     if loc.get("lat"):
-        weather_data = weather.get_forecast(loc["lat"], loc["lon"], config["weather"]["units"])
+        try:
+            weather_data = weather.get_forecast(loc["lat"], loc["lon"], config["weather"]["units"])
+        except Exception as e:
+            logging.warning("Weather provider failed: %s", e)
 
     quote_data = None
     if config["quote"]["enabled"]:
-        quote_data = quote.get_quote()
+        try:
+            quote_data = quote.get_quote()
+        except Exception as e:
+            logging.warning("Quote provider failed: %s", e)
 
     calendar_data = []
     if config["calendar"]["enabled"]:
-        calendar_data = cal_provider.get_events(config["calendar"]["calendar_ids"])
+        try:
+            calendar_data = cal_provider.get_events(config["calendar"]["calendar_ids"])
+        except Exception as e:
+            logging.warning("Calendar provider failed: %s", e)
 
-    sports_data = sports.get_scores(config["sports"])
-    news_data = news.get_news(
-        config["news"]["feeds"],
-        config["news"]["max_age_hours"],
-        config["news"]["max_items"],
-    )
+    try:
+        sports_data = sports.get_scores(config["sports"])
+    except Exception as e:
+        logging.warning("Sports provider failed: %s", e)
+        sports_data = []
+
+    try:
+        news_data = news.get_news(
+            config["news"]["feeds"],
+            config["news"]["max_age_hours"],
+            config["news"]["max_items"],
+        )
+    except Exception as e:
+        logging.warning("News provider failed: %s", e)
+        news_data = []
 
     return {
         "weather": weather_data,
@@ -66,20 +84,20 @@ def run_pipeline() -> bytes:
             save(pdf_bytes, today)
             cleanup(config["archive"]["retention_days"])
         except Exception as e:
-            logging.error(f"Archive error: {e}")
+            logging.error("Archive error: %s", e)
 
     if config["firstlight"]["printer"]:
         try:
             from app.print.printer import print_pdf
             print_pdf(pdf_bytes, config["firstlight"]["printer"])
         except Exception as e:
-            logging.error(f"Printer error: {e}")
+            logging.error("Printer error: %s", e)
 
     if config["email"]["enabled"]:
         try:
             from app.print.emailer import send
             send(pdf_bytes, today, config["email"])
         except Exception as e:
-            logging.error(f"Email error: {e}")
+            logging.error("Email error: %s", e)
 
     return pdf_bytes

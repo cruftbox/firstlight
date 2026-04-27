@@ -60,3 +60,22 @@ def test_render_with_all_sections():
     }
     pdf = render_digest(data, MINIMAL_CONFIG)
     assert pdf[:4] == b"%PDF"
+
+
+def test_preview_route_returns_pdf():
+    from unittest.mock import patch
+    from app import create_app
+
+    fake_pdf = b"%PDF-1.4 fake"
+    app = create_app()
+    app.config["TESTING"] = True
+
+    with app.test_client() as client:
+        with patch("app.config.load", return_value=MINIMAL_CONFIG):
+            with patch("app.print.pipeline.collect_data", return_value=MINIMAL_DATA):
+                with patch("app.print.renderer.render_digest", return_value=fake_pdf):
+                    resp = client.get("/preview")
+
+    assert resp.status_code == 200
+    assert resp.content_type == "application/pdf"
+    assert resp.data[:4] == b"%PDF"
