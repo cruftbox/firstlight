@@ -3,6 +3,15 @@
   margin: 0.5in;
 }
 
+@page a4-page {
+  size: A4;
+  margin: 0.5in;
+}
+
+body.a4 {
+  page: a4-page;
+}
+
 body.digest {
   font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
   font-size: 10pt;
