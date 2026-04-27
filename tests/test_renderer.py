@@ -1,6 +1,6 @@
 import pytest
 from datetime import date, timedelta
-from unittest.mock import patch as _arch_patch
+from unittest.mock import patch as _arch_patch, patch as _email_patch, MagicMock
 
 
 MINIMAL_CONFIG = {
@@ -124,3 +124,55 @@ def test_archive_list_all_empty_when_no_dir(tmp_path):
     with _arch_patch.object(arch, "ARCHIVE_DIR", missing):
         files = arch.list_all()
     assert files == []
+
+
+# ── Emailer ───────────────────────────────────────────────────────────────────
+
+
+def _make_email_config(port=587, user="user@example.com"):
+    return {
+        "smtp_host": "smtp.example.com",
+        "smtp_port": port,
+        "smtp_user": user,
+        "smtp_password": "secret",
+        "from_address": "from@example.com",
+        "to_address": "to@example.com",
+    }
+
+
+def test_emailer_uses_starttls_for_port_587():
+    mock_smtp = MagicMock()
+    mock_instance = mock_smtp.return_value.__enter__.return_value
+    with _email_patch("app.print.emailer.smtplib.SMTP", mock_smtp):
+        from app.print.emailer import send
+        result = send(b"%PDF", date(2026, 4, 28), _make_email_config(port=587))
+    assert result is True
+    mock_instance.starttls.assert_called_once()
+    mock_instance.login.assert_called_once_with("user@example.com", "secret")
+
+
+def test_emailer_uses_smtp_ssl_for_port_465():
+    mock_ssl = MagicMock()
+    mock_instance = mock_ssl.return_value.__enter__.return_value
+    with _email_patch("app.print.emailer.smtplib.SMTP_SSL", mock_ssl):
+        from app.print.emailer import send
+        result = send(b"%PDF", date(2026, 4, 28), _make_email_config(port=465))
+    assert result is True
+    mock_instance.starttls.assert_not_called()
+
+
+def test_emailer_skips_login_when_no_user():
+    mock_smtp = MagicMock()
+    mock_instance = mock_smtp.return_value.__enter__.return_value
+    with _email_patch("app.print.emailer.smtplib.SMTP", mock_smtp):
+        from app.print.emailer import send
+        result = send(b"%PDF", date(2026, 4, 28), _make_email_config(user=""))
+    assert result is True
+    mock_instance.login.assert_not_called()
+
+
+def test_emailer_returns_false_on_error():
+    with _email_patch("app.print.emailer.smtplib.SMTP", side_effect=ConnectionRefusedError("refused")):
+        from app.print.emailer import send
+        result = send(b"%PDF", date(2026, 4, 28), _make_email_config())
+    assert result is False
