@@ -1,6 +1,5 @@
 import pytest
 import responses as resp_lib
-from unittest.mock import patch
 
 # ── Weather ───────────────────────────────────────────────────────────────────
 
@@ -56,6 +55,13 @@ def test_geocode_not_found():
 
 
 @resp_lib.activate
+def test_geocode_returns_none_on_error():
+    resp_lib.add(resp_lib.GET, GEOCODE_URL, body=ConnectionError("network error"))
+    from app.providers.weather import geocode
+    assert geocode("Portland") is None
+
+
+@resp_lib.activate
 def test_get_forecast_returns_expected_keys():
     from app.providers import weather as w
     w._cache.clear()
@@ -67,6 +73,8 @@ def test_get_forecast_returns_expected_keys():
     assert result["high"] == 78
     assert result["low"] == 50
     assert result["units"] == "imperial"
+    assert "wind" in result
+    assert result["wind"] == 5
     assert isinstance(result["hourly"], list)
     assert len(result["hourly"]) == 5  # 6am, 9am, 12pm, 3pm, 6pm
 

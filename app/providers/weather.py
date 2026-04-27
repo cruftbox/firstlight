@@ -70,6 +70,7 @@ def get_forecast(lat: float, lon: float, units: str = "imperial") -> dict | None
     current = raw.get("current", {})
     code = current.get("weathercode", 0)
     temp = current.get("temperature_2m")
+    wind = current.get("windspeed_10m")
     daily = raw.get("daily", {})
     high = daily.get("temperature_2m_max", [None])[0]
     low = daily.get("temperature_2m_min", [None])[0]
@@ -90,6 +91,7 @@ def get_forecast(lat: float, lon: float, units: str = "imperial") -> dict | None
         "temp": round(temp) if temp is not None else None,
         "high": round(high) if high is not None else None,
         "low": round(low) if low is not None else None,
+        "wind": round(wind) if wind is not None else None,
         "units": units,
         "hourly": hourly_strip,
     }
