@@ -61,7 +61,7 @@ def get_scores(sports_config: dict) -> list:
                 event_date = event.get("date", "")
                 if event_date:
                     dt = datetime.fromisoformat(event_date.replace("Z", "+00:00"))
-                    time_str = dt.strftime("%-I:%M %p UTC")
+                    time_str = dt.strftime("%I:%M %p UTC").lstrip("0") or "12:00 AM UTC"
                     text = f"{event['name']}  {time_str}"
                 else:
                     text = event.get("name", "")
