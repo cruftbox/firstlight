@@ -132,3 +132,75 @@ def test_get_quote_returns_none_on_error():
     q._cache["date"] = None
     resp_lib.add(resp_lib.GET, QUOTE_URL, body=ConnectionError("network"))
     assert q.get_quote() is None
+
+# ── News ──────────────────────────────────────────────────────────────────────
+
+from unittest.mock import patch as _patch
+from datetime import datetime, timezone, timedelta
+
+
+def _make_entry(title, link, hours_ago=1):
+    pub = datetime.now(timezone.utc) - timedelta(hours=hours_ago)
+    return {"title": title, "link": link, "published_parsed": pub.timetuple()}
+
+
+def _fake_feed(entries_dicts):
+    entries = [type("E", (), d)() for d in entries_dicts]
+    return type("Feed", (), {"entries": entries})()
+
+
+def test_get_news_returns_items():
+    fake = _fake_feed([
+        _make_entry("AI chip rules", "https://example.com/1"),
+        _make_entry("City transit plan", "https://example.com/2"),
+    ])
+    with _patch("feedparser.parse", return_value=fake):
+        from app.providers.news import get_news
+        items = get_news([{"url": "https://example.com/rss", "label": "Tech"}],
+                         max_age_hours=24, max_items=10)
+    assert len(items) == 2
+    assert items[0]["title"] == "AI chip rules"
+    assert items[0]["label"] == "Tech"
+
+
+def test_get_news_filters_old_items():
+    fake = _fake_feed([
+        _make_entry("Recent", "https://example.com/1", hours_ago=1),
+        _make_entry("Old", "https://example.com/2", hours_ago=30),
+    ])
+    with _patch("feedparser.parse", return_value=fake):
+        from app.providers.news import get_news
+        items = get_news([{"url": "https://example.com/rss", "label": "Tech"}],
+                         max_age_hours=24, max_items=10)
+    assert len(items) == 1
+    assert items[0]["title"] == "Recent"
+
+
+def test_get_news_deduplicates():
+    entry_dict = _make_entry("Same headline", "https://example.com/1")
+    fake = _fake_feed([entry_dict])
+    with _patch("feedparser.parse", return_value=fake):
+        from app.providers.news import get_news
+        items = get_news(
+            [{"url": "https://a.com/rss", "label": "A"},
+             {"url": "https://b.com/rss", "label": "B"}],
+            max_age_hours=24, max_items=10,
+        )
+    assert len(items) == 1
+
+
+def test_get_news_respects_max_items():
+    fake = _fake_feed([_make_entry(f"Item {i}", f"https://example.com/{i}") for i in range(20)])
+    with _patch("feedparser.parse", return_value=fake):
+        from app.providers.news import get_news
+        items = get_news([{"url": "https://example.com/rss", "label": "Tech"}],
+                         max_age_hours=24, max_items=5)
+    assert len(items) == 5
+
+
+def test_get_news_handles_bad_feed():
+    with _patch("feedparser.parse", side_effect=Exception("network error")):
+        from app.providers.news import get_news
+        items = get_news([{"url": "https://broken.example/rss", "label": "Bad"}],
+                         max_age_hours=24, max_items=10)
+    assert items == []
