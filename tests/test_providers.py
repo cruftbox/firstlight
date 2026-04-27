@@ -204,3 +204,25 @@ def test_get_news_handles_bad_feed():
         items = get_news([{"url": "https://broken.example/rss", "label": "Bad"}],
                          max_age_hours=24, max_items=10)
     assert items == []
+
+
+def test_get_news_dedup_does_not_suppress_fresh_entry_when_stale_seen_first():
+    stale = _make_entry("Breaking News", "https://a.com/1", hours_ago=30)
+    fresh = _make_entry("Breaking News", "https://b.com/1", hours_ago=1)
+    fake_a = _fake_feed([stale])
+    fake_b = _fake_feed([fresh])
+
+    call_count = [0]
+    def fake_parse(url):
+        call_count[0] += 1
+        return fake_a if call_count[0] == 1 else fake_b
+
+    with _patch("feedparser.parse", side_effect=fake_parse):
+        from app.providers.news import get_news
+        items = get_news(
+            [{"url": "https://a.com/rss", "label": "A"},
+             {"url": "https://b.com/rss", "label": "B"}],
+            max_age_hours=24, max_items=10,
+        )
+    assert len(items) == 1
+    assert items[0]["label"] == "B"

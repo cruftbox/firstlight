@@ -24,7 +24,6 @@ def get_news(feeds: list, max_age_hours: int = 24, max_items: int = 10) -> list:
             dedup_key = hashlib.md5(title.lower().encode()).hexdigest()
             if dedup_key in seen:
                 continue
-            seen.add(dedup_key)
 
             published = getattr(entry, "published_parsed", None)
             if published:
@@ -32,6 +31,7 @@ def get_news(feeds: list, max_age_hours: int = 24, max_items: int = 10) -> list:
                 if pub_dt < cutoff:
                     continue
 
+            seen.add(dedup_key)
             items.append({"title": title, "url": link, "label": label})
             if len(items) >= max_items:
                 return items
