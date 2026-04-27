@@ -43,6 +43,9 @@ def list_all() -> list:
                 "filename": pdf_file.name,
                 "size_kb": size_kb,
             })
-        except (ValueError, OSError):
+        except ValueError:
+            continue
+        except OSError as e:
+            logging.warning("Archive list error for %s: %s", pdf_file, e)
             continue
     return files
