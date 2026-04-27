@@ -1,10 +1,14 @@
 import feedparser
 import hashlib
+import logging
 from datetime import datetime, timedelta, timezone
 
 
 def get_news(feeds: list, max_age_hours: int = 24, max_items: int = 10) -> list:
-    """Returns list of {"title", "url", "label"} deduped by title, within max_age_hours."""
+    """Returns list of {"title", "url", "label"} deduped by title, within max_age_hours.
+
+    Entries without a publication date are included unconditionally.
+    """
     cutoff = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
     seen: set = set()
     items: list = []
@@ -15,6 +19,9 @@ def get_news(feeds: list, max_age_hours: int = 24, max_items: int = 10) -> list:
         try:
             feed = feedparser.parse(url)
         except Exception:
+            continue
+        if feed.get("bozo") and not feed.get("entries"):
+            logging.warning("Feed error for %s: %s", url, feed.get("bozo_exception", "unknown"))
             continue
 
         for entry in feed.entries:

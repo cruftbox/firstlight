@@ -1,5 +1,7 @@
 import pytest
 import responses as resp_lib
+from unittest.mock import patch as _patch
+from datetime import datetime, timezone, timedelta
 
 # ── Weather ───────────────────────────────────────────────────────────────────
 
@@ -134,9 +136,6 @@ def test_get_quote_returns_none_on_error():
     assert q.get_quote() is None
 
 # ── News ──────────────────────────────────────────────────────────────────────
-
-from unittest.mock import patch as _patch
-from datetime import datetime, timezone, timedelta
 
 
 def _make_entry(title, link, hours_ago=1):
