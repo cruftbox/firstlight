@@ -1,0 +1,34 @@
+{% extends "setup/base.html" %}
+{% block step_num %}2{% endblock %}
+{% block progress_pct %}20{% endblock %}
+{% block step_title %}Your Location{% endblock %}
+{% block content %}
+<p class="text-muted">Used for the weather section of your digest.</p>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+{% if result %}
+<div class="alert alert-success">
+  Found: <strong>{{ result.name }}, {{ result.country }}</strong>
+  ({{ "%.4f"|format(result.lat) }}, {{ "%.4f"|format(result.lon) }})
+</div>
+<form method="POST">
+  <input type="hidden" name="action" value="confirm">
+  <button type="submit" class="btn btn-primary w-100 mb-2">Use this location →</button>
+</form>
+<p class="text-muted small text-center">Not right? Search again below.</p>
+<hr>
+{% endif %}
+
+<form method="POST">
+  <input type="hidden" name="action" value="search">
+  <div class="input-group">
+    <input type="text" name="city" class="form-control"
+           placeholder="City name (e.g. Portland, OR)"
+           value="{{ config.location.city or '' }}">
+    <button type="submit" class="btn btn-outline-secondary">Search</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "setup/base.html" %}
+{% block step_num %}10{% endblock %}
+{% block progress_pct %}100{% endblock %}
+{% block step_title %}Review &amp; Confirm{% endblock %}
+{% block content %}
+<dl class="row small">
+  <dt class="col-5">Paper size</dt>
+  <dd class="col-7">{{ config.firstlight.paper_size }}</dd>
+  <dt class="col-5">Location</dt>
+  <dd class="col-7">{{ config.location.city or '—' }}</dd>
+  <dt class="col-5">Print time</dt>
+  <dd class="col-7">{{ config.firstlight.print_time }} ({{ config.firstlight.timezone }})</dd>
+  <dt class="col-5">Units</dt>
+  <dd class="col-7">{{ config.weather.units }}</dd>
+  <dt class="col-5">Printer</dt>
+  <dd class="col-7">{{ config.firstlight.printer or '— none —' }}</dd>
+  <dt class="col-5">Quote of the day</dt>
+  <dd class="col-7">{{ 'Enabled' if config.quote.enabled else 'Disabled' }}</dd>
+  <dt class="col-5">Google Calendar</dt>
+  <dd class="col-7">{{ 'Enabled' if config.calendar.enabled else 'Skipped' }}</dd>
+  <dt class="col-5">Sports teams</dt>
+  <dd class="col-7">
+    {% set teams = namespace(all=[]) %}
+    {% for league, t in config.sports.items() %}{% if t %}{% set teams.all = teams.all + t %}{% endif %}{% endfor %}
+    {{ teams.all | join(', ') or '— none —' }}
+  </dd>
+  <dt class="col-5">News feeds</dt>
+  <dd class="col-7">{{ config.news.feeds | length }} feed(s)</dd>
+  <dt class="col-5">Email</dt>
+  <dd class="col-7">
+    {% if config.email.enabled %}{{ config.email.to_address }} via {{ config.email.smtp_host }}
+    {% else %}Skipped{% endif %}
+  </dd>
+</dl>
+<form method="POST">
+  <button type="submit" class="btn btn-success w-100 btn-lg mt-2">✓ Finish Setup</button>
+</form>
+<a href="{{ url_for('setup.step1') }}" class="btn btn-link w-100 mt-2">← Start over</a>
+{% endblock %}

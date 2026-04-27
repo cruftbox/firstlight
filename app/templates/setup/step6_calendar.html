@@ -1,0 +1,19 @@
+{% extends "setup/base.html" %}
+{% block step_num %}6{% endblock %}
+{% block progress_pct %}60{% endblock %}
+{% block step_title %}Google Calendar{% endblock %}
+{% block content %}
+<p class="text-muted">Paste your Google OAuth credentials JSON to enable calendar integration.</p>
+<p class="small text-muted">In <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> → APIs &amp; Services → Credentials → OAuth 2.0 Client IDs → Download JSON.</p>
+<form method="POST">
+  <div class="mb-3">
+    <label class="form-label fw-semibold">credentials.json contents</label>
+    <textarea name="credentials_json" class="form-control font-monospace" rows="6"
+              placeholder='{"installed": {"client_id": "...", "client_secret": "...", ...}}'></textarea>
+  </div>
+  <div class="d-grid gap-2">
+    <button type="submit" class="btn btn-primary">Save &amp; Continue →</button>
+    <button type="submit" name="action" value="skip" class="btn btn-outline-secondary">Skip</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "setup/base.html" %}
+{% block step_num %}8{% endblock %}
+{% block progress_pct %}80{% endblock %}
+{% block step_title %}News RSS Feeds{% endblock %}
+{% block content %}
+<p class="text-muted">Add RSS feed URLs with labels. Leave empty to skip news.</p>
+<form method="POST" id="feedsForm">
+  <div id="feedsList">
+    {% if config.news.feeds %}
+      {% for feed in config.news.feeds %}
+      <div class="row g-2 mb-2 feed-row">
+        <div class="col-8"><input type="text" name="feed_url" class="form-control" placeholder="https://feeds.example.com/rss" value="{{ feed.url }}"></div>
+        <div class="col-3"><input type="text" name="feed_label" class="form-control" placeholder="Label" value="{{ feed.label }}"></div>
+        <div class="col-1"><button type="button" class="btn btn-outline-danger btn-sm remove-feed">×</button></div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="row g-2 mb-2 feed-row">
+        <div class="col-8"><input type="text" name="feed_url" class="form-control" placeholder="https://feeds.example.com/rss"></div>
+        <div class="col-3"><input type="text" name="feed_label" class="form-control" placeholder="Label"></div>
+        <div class="col-1"><button type="button" class="btn btn-outline-danger btn-sm remove-feed">×</button></div>
+      </div>
+    {% endif %}
+  </div>
+  <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="addFeed">+ Add feed</button>
+  <div class="row g-2 mb-3">
+    <div class="col-6">
+      <label class="form-label">Max items</label>
+      <input type="number" name="max_items" class="form-control" value="{{ config.news.max_items }}" min="1" max="30">
+    </div>
+    <div class="col-6">
+      <label class="form-label">Max age (hours)</label>
+      <input type="number" name="max_age_hours" class="form-control" value="{{ config.news.max_age_hours }}" min="1" max="168">
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary w-100">Continue →</button>
+</form>
+<script>
+document.getElementById('addFeed').addEventListener('click', function() {
+  const row = document.querySelector('.feed-row').cloneNode(true);
+  row.querySelectorAll('input').forEach(i => i.value = '');
+  document.getElementById('feedsList').appendChild(row);
+});
+document.getElementById('feedsList').addEventListener('click', function(e) {
+  if (e.target.classList.contains('remove-feed')) {
+    const rows = document.querySelectorAll('.feed-row');
+    if (rows.length > 1) e.target.closest('.feed-row').remove();
+  }
+});
+</script>
+{% endblock %}

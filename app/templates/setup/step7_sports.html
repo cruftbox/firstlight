@@ -1,0 +1,26 @@
+{% extends "setup/base.html" %}
+{% block step_num %}7{% endblock %}
+{% block progress_pct %}70{% endblock %}
+{% block step_title %}Sports Teams{% endblock %}
+{% block content %}
+<p class="text-muted">Enter team names or abbreviations, comma-separated. Leave blank to skip a league.</p>
+<form method="POST">
+  {% set leagues = [
+    ("mlb", "MLB Baseball", "LAD, SF, NYY"),
+    ("nfl", "NFL Football", "LAR, KC, NE"),
+    ("nba", "NBA Basketball", "Lakers, Celtics"),
+    ("wnba", "WNBA", "Sparks, Storm"),
+    ("mls", "MLS Soccer", "LAFC, Portland"),
+    ("premier_league", "Premier League", "Arsenal, Chelsea"),
+  ] %}
+  {% for key, label, placeholder in leagues %}
+  <div class="mb-2">
+    <label class="form-label fw-semibold">{{ label }}</label>
+    <input type="text" name="{{ key }}" class="form-control"
+           placeholder="{{ placeholder }}"
+           value="{{ config.sports[key] | join(', ') }}">
+  </div>
+  {% endfor %}
+  <button type="submit" class="btn btn-primary w-100 mt-2">Continue →</button>
+</form>
+{% endblock %}

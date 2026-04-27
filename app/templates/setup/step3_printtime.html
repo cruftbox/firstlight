@@ -1,0 +1,29 @@
+{% extends "setup/base.html" %}
+{% block step_num %}3{% endblock %}
+{% block progress_pct %}30{% endblock %}
+{% block step_title %}Print Time & Units{% endblock %}
+{% block content %}
+<form method="POST">
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Daily print time</label>
+    <input type="time" name="print_time" class="form-control"
+           value="{{ config.firstlight.print_time }}">
+  </div>
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Timezone</label>
+    <select name="timezone" class="form-select">
+      {% for tz in timezones %}
+      <option value="{{ tz }}" {% if tz == config.firstlight.timezone %}selected{% endif %}>{{ tz }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Temperature units</label>
+    <select name="units" class="form-select">
+      <option value="imperial" {% if config.weather.units == 'imperial' %}selected{% endif %}>°F (Imperial)</option>
+      <option value="metric" {% if config.weather.units == 'metric' %}selected{% endif %}>°C (Metric)</option>
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary w-100">Continue →</button>
+</form>
+{% endblock %}

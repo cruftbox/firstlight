@@ -1,0 +1,25 @@
+{% extends "setup/base.html" %}
+{% block step_num %}4{% endblock %}
+{% block progress_pct %}40{% endblock %}
+{% block step_title %}Printer{% endblock %}
+{% block content %}
+<p class="text-muted">Select a CUPS printer reachable from the container, or skip to use archive/email delivery only.</p>
+<form method="POST">
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Printer</label>
+    <select name="printer" class="form-select">
+      <option value="">— none —</option>
+      {% for p in printers %}
+      <option value="{{ p }}" {% if p == config.firstlight.printer %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+    {% if not printers %}
+    <div class="form-text text-warning">No CUPS printers found. Make sure your printer is reachable from the container via <code>host.docker.internal</code>.</div>
+    {% endif %}
+  </div>
+  <div class="d-grid gap-2">
+    <button type="submit" class="btn btn-primary">Continue →</button>
+    <button type="submit" name="action" value="skip" class="btn btn-outline-secondary">Skip</button>
+  </div>
+</form>
+{% endblock %}
