@@ -176,3 +176,52 @@ def test_emailer_returns_false_on_error():
         from app.print.emailer import send
         result = send(b"%PDF", date(2026, 4, 28), _make_email_config())
     assert result is False
+
+
+# ── Archive Routes ─────────────────────────────────────────────────────────────
+
+def test_archive_route_lists_files():
+    from unittest.mock import patch
+    from app import create_app
+
+    fake_files = [
+        {"date": "Monday, April 28, 2026", "filename": "2026-04-28.pdf", "size_kb": 12.3}
+    ]
+    app = create_app()
+    app.config["TESTING"] = True
+
+    with app.test_client() as client:
+        with patch("app.config.load", return_value=MINIMAL_CONFIG):
+            with patch("app.print.archive.list_all", return_value=fake_files):
+                resp = client.get("/archive")
+
+    assert resp.status_code == 200
+    assert b"2026-04-28.pdf" in resp.data
+
+
+def test_archive_download_rejects_path_traversal():
+    from unittest.mock import patch
+    from app import create_app
+
+    app = create_app()
+    app.config["TESTING"] = True
+
+    with app.test_client() as client:
+        with patch("app.config.load", return_value=MINIMAL_CONFIG):
+            resp = client.get("/archive/../../etc/passwd")
+
+    assert resp.status_code in (404, 308)
+
+
+def test_archive_download_rejects_nonexistent():
+    from unittest.mock import patch
+    from app import create_app
+
+    app = create_app()
+    app.config["TESTING"] = True
+
+    with app.test_client() as client:
+        with patch("app.config.load", return_value=MINIMAL_CONFIG):
+            resp = client.get("/archive/9999-99-99.pdf")
+
+    assert resp.status_code == 404
