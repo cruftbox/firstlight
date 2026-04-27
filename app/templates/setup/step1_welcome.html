@@ -1,0 +1,17 @@
+{% extends "setup/base.html" %}
+{% block step_num %}1{% endblock %}
+{% block progress_pct %}10{% endblock %}
+{% block step_title %}Welcome to Firstlight{% endblock %}
+{% block content %}
+<p class="text-muted">Let's get your daily digest set up. This takes about 5 minutes.</p>
+<form method="POST" action="/setup/1">
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Paper size</label>
+    <select name="paper_size" class="form-select">
+      <option value="letter">Letter (US, 8.5&times;11")</option>
+      <option value="a4">A4 (International, 210&times;297mm)</option>
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary w-100">Continue &rarr;</button>
+</form>
+{% endblock %}
