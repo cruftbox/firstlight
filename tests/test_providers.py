@@ -305,24 +305,55 @@ def test_sports_network_error():
 
 # ── Calendar ──────────────────────────────────────────────────────────────────
 
-from unittest.mock import patch as _patch2
-
 
 def test_calendar_returns_empty_when_no_token(tmp_path):
-    with _patch2("app.providers.calendar.TOKEN_PATH", tmp_path / "missing_token.json"):
-        from importlib import reload
-        import app.providers.calendar as cal_mod
-        reload(cal_mod)
+    import app.providers.calendar as cal_mod
+    with _patch("app.providers.calendar.TOKEN_PATH", tmp_path / "missing_token.json"):
         events = cal_mod.get_events(["primary"])
     assert events == []
 
 
 def test_calendar_returns_empty_on_invalid_token(tmp_path):
     token_file = tmp_path / "token.json"
-    token_file.write_text('{"invalid": true, "no_fields": "here"}')
-    with _patch2("app.providers.calendar.TOKEN_PATH", token_file):
-        from importlib import reload
-        import app.providers.calendar as cal_mod
-        reload(cal_mod)
+    token_file.write_text('{"invalid": true, "no_fields": "here"}', encoding="utf-8")
+    import app.providers.calendar as cal_mod
+    with _patch("app.providers.calendar.TOKEN_PATH", token_file):
         events = cal_mod.get_events(["primary"])
     assert events == []
+
+
+def test_calendar_returns_events_with_valid_credentials(tmp_path):
+    from unittest.mock import MagicMock
+    mock_creds = MagicMock()
+    mock_creds.valid = True
+    mock_creds.expired = False
+
+    mock_event_list = {
+        "items": [
+            {
+                "summary": "Team standup",
+                "start": {"dateTime": "2026-04-28T09:00:00-07:00"},
+            },
+            {
+                "summary": "Company holiday",
+                "start": {"date": "2026-04-28"},
+            },
+        ]
+    }
+    mock_service = MagicMock()
+    mock_service.events.return_value.list.return_value.execute.return_value = mock_event_list
+
+    import app.providers.calendar as cal_mod
+    with _patch("app.providers.calendar._get_credentials", return_value=mock_creds), \
+         _patch("googleapiclient.discovery.build", return_value=mock_service):
+        events = cal_mod.get_events(["primary"])
+
+    assert len(events) == 2
+    timed = events[0]
+    assert timed["title"] == "Team standup"
+    assert timed["all_day"] is False
+    assert isinstance(timed["time"], str)
+    all_day = events[1]
+    assert all_day["title"] == "Company holiday"
+    assert all_day["all_day"] is True
+    assert all_day["time"] == "All day"
