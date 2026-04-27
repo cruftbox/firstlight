@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+.venv/
+*.egg-info/
+
+# Config volume (never commit — contains credentials)
+config/
+
+# Editor
+.vscode/
+.idea/
+*.swp
