@@ -19,6 +19,8 @@ body.digest {
   color: #000;
   margin: 0;
   padding: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 /* ── Header ── */
@@ -138,9 +140,3 @@ h2 {
   font-size: 9pt;
 }
 
-@media print {
-  body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-}
