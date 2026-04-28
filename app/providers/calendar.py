@@ -46,15 +46,22 @@ def get_events(calendar_ids: list, day_offset: int = 0) -> list:
                 dt = datetime.fromisoformat(start["dateTime"])
                 time_str = dt.strftime("%I:%M %p").lstrip("0") or "12:00 AM"
                 all_day = False
+                sort_key = dt.astimezone(timezone.utc)
             else:
+                date_str = start.get("date", "")
                 time_str = "All day"
                 all_day = True
+                sort_key = datetime.fromisoformat(date_str).replace(tzinfo=timezone.utc) if date_str else day_start
             events.append({
                 "time": time_str,
                 "title": item.get("summary", ""),
                 "all_day": all_day,
+                "_sort": sort_key,
             })
 
+    events.sort(key=lambda e: e["_sort"])
+    for e in events:
+        del e["_sort"]
     return events
 
 
