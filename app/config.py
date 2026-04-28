@@ -37,7 +37,7 @@ DEFAULT_CONFIG = {
     "history": {"enabled": True},
     "sports": {
         "mlb": [], "nfl": [], "nba": [], "nhl": [],
-        "wnba": [], "mls": [], "premier_league": [],
+        "wnba": [], "nwsl": [], "mls": [], "premier_league": [],
     },
     "news": {"max_age_hours": 24, "max_items": 15, "feeds": []},
 }

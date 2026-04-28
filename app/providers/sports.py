@@ -9,13 +9,14 @@ ENDPOINTS = {
     "nba": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard",
     "nhl": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard",
     "wnba": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard",
+    "nwsl": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.nwsl/scoreboard",
     "mls": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/scoreboard",
     "premier_league": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard",
 }
 
 SPORT_EMOJIS = {
     "mlb": "⚾", "nfl": "🏈", "nba": "🏀", "nhl": "🏒",
-    "wnba": "🏀", "mls": "⚽", "premier_league": "⚽",
+    "wnba": "🏀", "nwsl": "⚽", "mls": "⚽", "premier_league": "⚽",
 }
 
 
