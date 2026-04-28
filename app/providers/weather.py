@@ -1,5 +1,6 @@
 import requests
 import time
+from datetime import datetime
 from threading import Lock
 
 _cache: dict = {}
@@ -19,6 +20,34 @@ WMO_CODES = {
     95: "Thunderstorm", 96: "Thunderstorm with slight hail",
     99: "Thunderstorm with heavy hail",
 }
+
+
+def _get_air_quality(lat: float, lon: float) -> int | None:
+    try:
+        resp = requests.get(
+            "https://air-quality-api.open-meteo.com/v1/air-quality",
+            params={"latitude": lat, "longitude": lon, "current": "us_aqi"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        aqi = resp.json().get("current", {}).get("us_aqi")
+        return int(aqi) if aqi is not None else None
+    except Exception:
+        return None
+
+
+def _aqi_label(aqi: int) -> str:
+    if aqi <= 50:
+        return "Good"
+    if aqi <= 100:
+        return "Moderate"
+    if aqi <= 150:
+        return "Unhealthy for Sensitive Groups"
+    if aqi <= 200:
+        return "Unhealthy"
+    if aqi <= 300:
+        return "Very Unhealthy"
+    return "Hazardous"
 
 
 def geocode(city: str) -> dict | None:
@@ -55,10 +84,10 @@ def get_forecast(lat: float, lon: float, units: str = "imperial") -> dict | None
         "longitude": lon,
         "current": "temperature_2m,weathercode,windspeed_10m",
         "hourly": "temperature_2m,weathercode",
-        "daily": "temperature_2m_max,temperature_2m_min",
+        "daily": "temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum",
         "temperature_unit": temp_unit,
         "timezone": "auto",
-        "forecast_days": 1,
+        "forecast_days": 4,
     }
     try:
         resp = requests.get("https://api.open-meteo.com/v1/forecast", params=params, timeout=10)
@@ -75,6 +104,30 @@ def get_forecast(lat: float, lon: float, units: str = "imperial") -> dict | None
     high = daily.get("temperature_2m_max", [None])[0]
     low = daily.get("temperature_2m_min", [None])[0]
 
+    # Sunrise / sunset — Open-Meteo returns local time as "YYYY-MM-DDTHH:MM"
+    def _fmt_time(iso_str):
+        if not iso_str:
+            return None
+        try:
+            return datetime.fromisoformat(iso_str).strftime("%-I:%M %p")
+        except Exception:
+            return None
+
+    sunrise = _fmt_time((daily.get("sunrise") or [None])[0])
+    sunset = _fmt_time((daily.get("sunset") or [None])[0])
+
+    # Rain in the next 3 days (indices 1-3 of daily arrays)
+    daily_times = daily.get("time", [])
+    precip = daily.get("precipitation_sum", [])
+    rain_days = []
+    for i in range(1, min(4, len(daily_times))):
+        if i < len(precip) and precip[i] is not None and precip[i] >= 1.0:
+            try:
+                day_name = datetime.strptime(daily_times[i], "%Y-%m-%d").strftime("%A")
+                rain_days.append(day_name)
+            except Exception:
+                pass
+
     hourly_times = raw.get("hourly", {}).get("time", [])
     hourly_temps = raw.get("hourly", {}).get("temperature_2m", [])
     target_hours = [6, 9, 12, 15, 18]
@@ -86,6 +139,8 @@ def get_forecast(lat: float, lon: float, units: str = "imperial") -> dict | None
                 hourly_strip.append({"hour": h, "temp": round(hourly_temps[i])})
                 break
 
+    aqi = _get_air_quality(lat, lon)
+
     result = {
         "condition": WMO_CODES.get(code, "Unknown"),
         "temp": round(temp) if temp is not None else None,
@@ -94,6 +149,11 @@ def get_forecast(lat: float, lon: float, units: str = "imperial") -> dict | None
         "wind": round(wind) if wind is not None else None,
         "units": units,
         "hourly": hourly_strip,
+        "sunrise": sunrise,
+        "sunset": sunset,
+        "rain_days": rain_days,
+        "aqi": aqi,
+        "aqi_label": _aqi_label(aqi) if aqi is not None else None,
     }
 
     with _cache_lock:

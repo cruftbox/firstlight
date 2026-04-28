@@ -5,7 +5,7 @@ import json
 
 def collect_data(config: dict) -> dict:
     """Collect data from all providers. Each provider fails gracefully to empty/None."""
-    from app.providers import weather, quote, news, sports
+    from app.providers import weather, quote, news, sports, history
     from app.providers import calendar as cal_provider
 
     loc = config["location"]
@@ -48,6 +48,12 @@ def collect_data(config: dict) -> dict:
         logging.warning("News provider failed: %s", e)
         news_data = []
 
+    try:
+        history_data = history.get_events()
+    except Exception as e:
+        logging.warning("History provider failed: %s", e)
+        history_data = []
+
     return {
         "weather": weather_data,
         "quote": quote_data,
@@ -56,6 +62,7 @@ def collect_data(config: dict) -> dict:
         "sports": sports_data,
         "news": news_data,
         "todos": _load_todos(),
+        "history": history_data,
     }
 
 
