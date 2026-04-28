@@ -12,19 +12,7 @@
       <span class="title">FIRSTLIGHT</span>
       <span class="date-str">{{ date_str }}</span>
     </div>
-    {% if quote %}
-    <div class="quote-line">"{{ quote.text }}" — {{ quote.author }}</div>
-    {% endif %}
   </header>
-
-  {% if history %}
-  <section class="history-section">
-    <span class="history-label">ON THIS DAY</span>
-    {% for event in history %}
-    <span class="history-item"><span class="history-year">{{ event.year }}</span> — {{ event.text }}</span>
-    {% endfor %}
-  </section>
-  {% endif %}
 
   <section class="weather-section">
     {% if weather %}
@@ -51,6 +39,19 @@
     </div>
     {% endif %}
   </section>
+
+  {% if quote %}
+  <div class="quote-line">"{{ quote.text }}" — {{ quote.author }}</div>
+  {% endif %}
+
+  {% if history %}
+  <section class="history-section">
+    <span class="history-label">ON THIS DAY</span>
+    {% for event in history %}
+    <span class="history-item"><span class="history-year">{{ event.year }}</span> — {{ event.text }}</span>
+    {% endfor %}
+  </section>
+  {% endif %}
 
   <div class="two-col">
     <section class="calendar-section">
