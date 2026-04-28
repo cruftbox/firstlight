@@ -116,12 +116,22 @@ def step6():
         creds_json = request.form.get("credentials_json", "").strip()
         if creds_json:
             try:
-                json.loads(creds_json)
+                parsed = json.loads(creds_json)
             except json.JSONDecodeError as exc:
                 return render_template(
                     "setup/step6_calendar.html", config=cfg,
                     creds_exist=creds_path.exists(), token_exist=token_path.exists(),
                     error=f"Invalid JSON: {exc}",
+                )
+            # Detect markdown-corrupted values (e.g. client_id pasted as "[id](url)")
+            client_type = parsed.get("installed") or parsed.get("web") or {}
+            client_id = client_type.get("client_id", "")
+            if client_id.startswith("[") or "](http" in client_id:
+                return render_template(
+                    "setup/step6_calendar.html", config=cfg,
+                    creds_exist=creds_path.exists(), token_exist=token_path.exists(),
+                    error="Credentials look corrupted — the client_id contains markdown formatting. "
+                          "Re-download the JSON file from Google Cloud Console and paste the raw contents.",
                 )
             creds_path.parent.mkdir(parents=True, exist_ok=True)
             creds_path.write_text(creds_json, encoding="utf-8")
