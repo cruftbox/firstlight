@@ -225,3 +225,54 @@ def test_archive_download_rejects_nonexistent():
             resp = client.get("/archive/9999-99-99.pdf")
 
     assert resp.status_code == 404
+
+
+# ── Todo API ───────────────────────────────────────────────────────────────────
+
+
+def test_todo_api_get_returns_empty_list():
+    from unittest.mock import patch
+    from app import create_app
+
+    app = create_app()
+    app.config["TESTING"] = True
+
+    with app.test_client() as client:
+        with patch("app.config.load", return_value=MINIMAL_CONFIG):
+            with patch("app.routes.todo.TODOS_PATH") as mock_path:
+                mock_path.exists.return_value = False
+                resp = client.get("/api/todos")
+
+    assert resp.status_code == 200
+    assert resp.get_json() == []
+
+
+def test_todo_api_post_creates_item():
+    from unittest.mock import patch, MagicMock
+    from app import create_app
+    import json
+
+    app = create_app()
+    app.config["TESTING"] = True
+
+    saved = []
+
+    def mock_save(todos):
+        saved.extend(todos)
+
+    with app.test_client() as client:
+        with patch("app.config.load", return_value=MINIMAL_CONFIG):
+            with patch("app.routes.todo.TODOS_PATH") as mock_path:
+                mock_path.exists.return_value = False
+                with patch("app.routes.todo._save", side_effect=mock_save):
+                    resp = client.post(
+                        "/api/todos",
+                        data=json.dumps({"text": "Buy milk"}),
+                        content_type="application/json",
+                    )
+
+    assert resp.status_code == 201
+    data = resp.get_json()
+    assert data["text"] == "Buy milk"
+    assert data["done"] is False
+    assert "id" in data

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}To-Do — Firstlight{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>To-Do</h2>
+  <a href="/" class="btn btn-outline-secondary btn-sm">&larr; Home</a>
+</div>
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="input-group mb-3">
+      <input type="text" id="newTodoInput" class="form-control"
+             placeholder="Add a new item…">
+      <button id="addTodoBtn" class="btn btn-primary">Add</button>
+    </div>
+    <ul id="todoList" class="list-group">
+      {% for todo in todos %}
+      <li class="list-group-item d-flex justify-content-between align-items-center"
+          data-id="{{ todo.id }}">
+        <span class="todo-text">{{ todo.text }}</span>
+        <button class="btn btn-sm btn-outline-danger delete-btn">&times;</button>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/todo.js') }}"></script>
+{% endblock %}

@@ -1,6 +1,119 @@
 {% extends "base.html" %}
 {% block title %}Settings — Firstlight{% endblock %}
 {% block content %}
-<h2>Settings</h2>
-<p class="text-muted">Coming soon.</p>
+<h2 class="mb-4">Settings</h2>
+
+{% if saved %}
+<div class="alert alert-success">Settings saved.</div>
+{% endif %}
+
+<form method="POST">
+
+  <div class="card mb-4">
+    <div class="card-header fw-bold">General</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Paper size</label>
+          <select name="paper_size" class="form-select">
+            <option value="letter" {% if config.firstlight.paper_size == 'letter' %}selected{% endif %}>Letter</option>
+            <option value="a4" {% if config.firstlight.paper_size == 'a4' %}selected{% endif %}>A4</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Print time</label>
+          <input type="time" name="print_time" class="form-control"
+                 value="{{ config.firstlight.print_time }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Timezone</label>
+          <select name="timezone" class="form-select">
+            {% for tz in timezones %}
+            <option value="{{ tz }}" {% if tz == config.firstlight.timezone %}selected{% endif %}>{{ tz }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Printer</label>
+          <select name="printer" class="form-select">
+            <option value="">— none —</option>
+            {% for p in printers %}
+            <option value="{{ p }}" {% if p == config.firstlight.printer %}selected{% endif %}>{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="quote_enabled"
+                   id="quoteCheck" {% if config.quote.enabled %}checked{% endif %}>
+            <label class="form-check-label" for="quoteCheck">Quote of the day</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header fw-bold">Archive</div>
+    <div class="card-body">
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" name="archive_enabled"
+               id="archiveCheck" {% if config.archive.enabled %}checked{% endif %}>
+        <label class="form-check-label" for="archiveCheck">Enable PDF archive</label>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Retention (days)</label>
+        <input type="number" name="retention_days" class="form-control"
+               value="{{ config.archive.retention_days }}" min="1" max="365">
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header fw-bold">Email Delivery</div>
+    <div class="card-body">
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" name="email_enabled"
+               id="emailCheck" {% if config.email.enabled %}checked{% endif %}>
+        <label class="form-check-label" for="emailCheck">Enable email delivery</label>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">SMTP Host</label>
+          <input type="text" name="smtp_host" class="form-control"
+                 value="{{ config.email.smtp_host }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Port</label>
+          <input type="number" name="smtp_port" class="form-control"
+                 value="{{ config.email.smtp_port }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Username</label>
+          <input type="text" name="smtp_user" class="form-control"
+                 value="{{ config.email.smtp_user }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Password</label>
+          <input type="password" name="smtp_password" class="form-control"
+                 placeholder="Leave blank to keep current">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">From</label>
+          <input type="email" name="from_address" class="form-control"
+                 value="{{ config.email.from_address }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">To</label>
+          <input type="email" name="to_address" class="form-control"
+                 value="{{ config.email.to_address }}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary px-4">Save Settings</button>
+  <a href="/" class="btn btn-outline-secondary ms-2">Cancel</a>
+
+</form>
 {% endblock %}

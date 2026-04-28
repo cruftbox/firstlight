@@ -1,6 +1,59 @@
 {% extends "base.html" %}
 {% block title %}Firstlight{% endblock %}
 {% block content %}
-<h2>Dashboard</h2>
-<p class="text-muted">Coming soon.</p>
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5 class="card-title">&#9728; Daily Digest</h5>
+        {% if next_run %}
+        <p class="text-muted">Next print: <strong>{{ next_run }}</strong></p>
+        {% else %}
+        <p class="text-muted">Scheduler not running (setup incomplete or no print time set).</p>
+        {% endif %}
+        <div class="d-grid gap-2">
+          <button id="printBtn" class="btn btn-primary">Print Now</button>
+          <a href="/preview" target="_blank" class="btn btn-outline-secondary">Preview PDF</a>
+        </div>
+        <div id="printStatus" class="mt-2"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5 class="card-title">Quick Links</h5>
+        <ul class="list-unstyled mb-0">
+          <li class="mb-1"><a href="/todo">&#9999; To-Do list</a></li>
+          <li class="mb-1"><a href="/archive">&#128193; View past digests &rarr;</a></li>
+          <li><a href="/settings">&#9881; Settings</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('printBtn').addEventListener('click', function () {
+  const btn = this;
+  const status = document.getElementById('printStatus');
+  btn.disabled = true;
+  btn.textContent = 'Printing…';
+  fetch('/print', {method: 'POST'})
+    .then(r => r.json())
+    .then(d => {
+      status.innerHTML = d.status === 'ok'
+        ? '<div class="alert alert-success py-1">Sent!</div>'
+        : '<div class="alert alert-danger py-1">Error: ' + (d.message || 'unknown') + '</div>';
+    })
+    .catch(() => {
+      status.innerHTML = '<div class="alert alert-danger py-1">Request failed.</div>';
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.textContent = 'Print Now';
+    });
+});
+</script>
 {% endblock %}
