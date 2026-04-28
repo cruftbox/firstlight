@@ -55,6 +55,15 @@ const LEAGUE_TEAMS = {
     {abbr:"LV",name:"Aces"},{abbr:"MIN",name:"Lynx"},{abbr:"NY",name:"Liberty"},
     {abbr:"PHX",name:"Mercury"},{abbr:"SEA",name:"Storm"},{abbr:"WSH",name:"Mystics"},
   ],
+  nwsl: [
+    {abbr:"ACFC",name:"Angel City FC"},{abbr:"BAY",name:"Bay FC"},
+    {abbr:"CAR",name:"Carolina Courage"},{abbr:"CHI",name:"Chicago Red Stars"},
+    {abbr:"HOU",name:"Houston Dash"},{abbr:"KC",name:"Kansas City Current"},
+    {abbr:"NJY",name:"Gotham FC"},{abbr:"ORL",name:"Orlando Pride"},
+    {abbr:"POR",name:"Portland Thorns"},{abbr:"LOU",name:"Racing Louisville"},
+    {abbr:"SD",name:"San Diego Wave"},{abbr:"SEA",name:"Seattle Reign"},
+    {abbr:"UTA",name:"Utah Royals"},{abbr:"WSH",name:"Washington Spirit"},
+  ],
   mls: [
     {abbr:"ATL",name:"Atlanta United"},{abbr:"ATX",name:"Austin FC"},{abbr:"CHI",name:"Fire"},
     {abbr:"CIN",name:"FC Cincinnati"},{abbr:"CLB",name:"Crew"},{abbr:"COL",name:"Rapids"},
