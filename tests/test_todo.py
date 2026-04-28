@@ -86,3 +86,21 @@ def test_todo_api_delete_removes_item():
     assert resp.status_code == 200
     assert resp.get_json() == {"status": "ok"}
     assert all(t["id"] != "abc-123" for t in saved_arg)
+
+
+def test_todo_api_post_rejects_empty_text():
+    app = create_app()
+    app.config["TESTING"] = True
+
+    with app.test_client() as client:
+        with patch("app.config.load", return_value=MINIMAL_CONFIG):
+            with patch("app.routes.todo.TODOS_PATH") as mock_path:
+                mock_path.exists.return_value = False
+                resp = client.post(
+                    "/api/todos",
+                    data=json.dumps({"text": "   "}),
+                    content_type="application/json",
+                )
+
+    assert resp.status_code == 400
+    assert "error" in resp.get_json()

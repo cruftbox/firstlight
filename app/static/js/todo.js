@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function () {
     .then(todo => {
       list.appendChild(makeTodoItem(todo));
       input.value = '';
+    })
+    .catch(() => {
+      alert('Failed to save todo. Please try again.');
     });
   }
 
@@ -45,7 +48,9 @@ document.addEventListener('DOMContentLoaded', function () {
         method: 'DELETE',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({id: li.dataset.id}),
-      }).then(() => li.remove());
+      }).then(r => {
+        if (r.ok) li.remove();
+      });
     }
   });
 });

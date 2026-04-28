@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify
 from pathlib import Path
 import json
+import logging
 import uuid
 
 todo_bp = Blueprint("todo", __name__)
@@ -40,8 +41,14 @@ def create_todo():
         "text": (data.get("text") or "").strip(),
         "done": False,
     }
+    if not todo["text"]:
+        return jsonify({"error": "text is required"}), 400
     todos.append(todo)
-    _save(todos)
+    try:
+        _save(todos)
+    except OSError as e:
+        logging.error("Todo save failed: %s", e)
+        return jsonify({"error": "save failed"}), 500
     return jsonify(todo), 201
 
 
@@ -50,5 +57,9 @@ def delete_todo():
     data = request.get_json(silent=True) or {}
     todo_id = data.get("id")
     todos = [t for t in _load() if t["id"] != todo_id]
-    _save(todos)
+    try:
+        _save(todos)
+    except OSError as e:
+        logging.error("Todo save failed: %s", e)
+        return jsonify({"error": "save failed"}), 500
     return jsonify({"status": "ok"})
