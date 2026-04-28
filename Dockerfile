@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y \
     libgdk-pixbuf2.0-0 \
     libffi-dev \
     shared-mime-info \
-    cups-client \
+    cups \
+    cups-bsd \
     fonts-noto-color-emoji \
     && rm -rf /var/lib/apt/lists/*
 
@@ -18,5 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 COPY tests/ ./tests/
 
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 EXPOSE 5000
-CMD ["python", "-m", "flask", "--app", "app", "run", "--host=0.0.0.0"]
+CMD ["/app/start.sh"]

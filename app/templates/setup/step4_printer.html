@@ -3,22 +3,28 @@
 {% block progress_pct %}40{% endblock %}
 {% block step_title %}Printer{% endblock %}
 {% block content %}
-<p class="text-muted">Select a CUPS printer reachable from the container, or skip to use archive/email delivery only.</p>
+<p class="text-muted">Enter your network printer's IP address. The printer must support IPP (most modern printers do). Skip to use email or archive only.</p>
+
+{% if error %}
+<div class="alert alert-danger small">{{ error }}</div>
+{% endif %}
+
+{% if config.firstlight.printer_ip %}
+<div class="alert alert-success small">
+  <strong>✓ Printer configured</strong> at {{ config.firstlight.printer_ip }}
+</div>
+{% endif %}
+
 <form method="POST">
   <div class="mb-3">
-    <label class="form-label fw-semibold">Printer</label>
-    <select name="printer" class="form-select">
-      <option value="">— none —</option>
-      {% for p in printers %}
-      <option value="{{ p }}" {% if p == config.firstlight.printer %}selected{% endif %}>{{ p }}</option>
-      {% endfor %}
-    </select>
-    {% if not printers %}
-    <div class="form-text text-warning">No CUPS printers found. Make sure your printer is reachable from the container via <code>host.docker.internal</code>.</div>
-    {% endif %}
+    <label class="form-label fw-semibold">Printer IP address</label>
+    <input type="text" name="printer_ip" class="form-control"
+           placeholder="e.g. 192.168.4.50"
+           value="{{ config.firstlight.printer_ip }}">
+    <div class="form-text">Find it in your printer's network settings or router's device list. Brother printers: print a network config page by holding the WiFi button.</div>
   </div>
   <div class="d-grid gap-2">
-    <button type="submit" class="btn btn-primary">Continue →</button>
+    <button type="submit" class="btn btn-primary">Connect &amp; Continue →</button>
     <button type="submit" name="action" value="skip" class="btn btn-outline-secondary">Skip</button>
   </div>
 </form>

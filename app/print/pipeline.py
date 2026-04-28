@@ -100,7 +100,11 @@ def run_pipeline() -> bytes:
     if config["firstlight"]["printer"]:
         try:
             from app.print.printer import print_pdf
-            print_pdf(pdf_bytes, config["firstlight"]["printer"])
+            print_pdf(
+                pdf_bytes,
+                config["firstlight"]["printer"],
+                config["firstlight"].get("printer_ip", ""),
+            )
         except Exception as e:
             logging.error("Printer error: %s", e)
 

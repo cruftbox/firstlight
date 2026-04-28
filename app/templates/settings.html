@@ -34,13 +34,11 @@
           </select>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Printer</label>
-          <select name="printer" class="form-select">
-            <option value="">— none —</option>
-            {% for p in printers %}
-            <option value="{{ p }}" {% if p == config.firstlight.printer %}selected{% endif %}>{{ p }}</option>
-            {% endfor %}
-          </select>
+          <label class="form-label">Printer IP address</label>
+          <input type="text" name="printer_ip" class="form-control"
+                 placeholder="e.g. 192.168.4.50"
+                 value="{{ config.firstlight.printer_ip }}">
+          <div class="form-text">Leave blank to disable printing.</div>
         </div>
         <div class="col-12">
           <label class="form-label fw-semibold">Optional content</label>

@@ -52,7 +52,9 @@ def settings():
     if request.method == "POST":
         cfg["firstlight"]["print_time"] = request.form.get("print_time", cfg["firstlight"]["print_time"])
         cfg["firstlight"]["timezone"] = request.form.get("timezone", cfg["firstlight"]["timezone"])
-        cfg["firstlight"]["printer"] = request.form.get("printer", "")
+        printer_ip = request.form.get("printer_ip", "").strip()
+        cfg["firstlight"]["printer_ip"] = printer_ip
+        cfg["firstlight"]["printer"] = "Firstlight" if printer_ip else ""
         cfg["firstlight"]["paper_size"] = request.form.get("paper_size", "letter")
         cfg["quote"]["enabled"] = request.form.get("quote_enabled") == "on"
         cfg["history"]["enabled"] = request.form.get("history_enabled") == "on"

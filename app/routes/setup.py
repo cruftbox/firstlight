@@ -74,14 +74,23 @@ def step3():
 @setup_bp.route("/4", methods=["GET", "POST"])
 def step4():
     cfg = load_config()
+    error = None
     if request.method == "POST":
-        if request.form.get("action") != "skip":
-            cfg["firstlight"]["printer"] = request.form.get("printer", "")
-            save_config(cfg)
-        return redirect(url_for("setup.step5"))
-    from app.print.printer import get_printers
-    return render_template("setup/step4_printer.html", config=cfg,
-                           printers=get_printers())
+        if request.form.get("action") == "skip":
+            return redirect(url_for("setup.step5"))
+        printer_ip = request.form.get("printer_ip", "").strip()
+        if printer_ip:
+            from app.print.printer import setup_network_printer, CUPS_PRINTER_NAME
+            if setup_network_printer(printer_ip):
+                cfg["firstlight"]["printer_ip"] = printer_ip
+                cfg["firstlight"]["printer"] = CUPS_PRINTER_NAME
+                save_config(cfg)
+                return redirect(url_for("setup.step5"))
+            else:
+                error = f"Could not reach printer at {printer_ip}. Check the IP and try again."
+        else:
+            error = "Enter the printer's IP address."
+    return render_template("setup/step4_printer.html", config=cfg, error=error)
 
 
 @setup_bp.route("/5", methods=["GET", "POST"])
