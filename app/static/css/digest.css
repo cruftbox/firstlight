@@ -14,8 +14,8 @@ body.a4 {
 
 body.digest {
   font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
-  font-size: 10pt;
-  line-height: 1.4;
+  font-size: 11pt;
+  line-height: 1.45;
   color: #000;
   margin: 0;
   padding: 0;
@@ -41,96 +41,96 @@ body.digest {
 
 .quote-line {
   font-style: italic;
-  font-size: 9pt;
+  font-size: 10pt;
   color: #444;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 /* ── Weather ── */
 .weather-section {
   background: #f4f4f4;
-  padding: 6px 8px;
-  margin-bottom: 8px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
   border-left: 3px solid #333;
 }
 
 .weather-main {
-  font-size: 11pt;
-  margin-bottom: 3px;
+  font-size: 12pt;
+  margin-bottom: 4px;
 }
 
 .hour-chip {
   display: inline-block;
   margin-right: 6px;
-  padding: 1px 5px;
+  padding: 2px 6px;
   background: #e0e0e0;
   border-radius: 3px;
-  font-size: 8.5pt;
+  font-size: 9.5pt;
 }
 
 /* ── Two-column ── */
 .two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 14px;
+  margin-bottom: 12px;
   border-top: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
-  padding: 6px 0;
+  padding: 10px 0;
 }
 
 h2 {
-  font-size: 9pt;
+  font-size: 10pt;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   border-bottom: 1px solid #000;
-  margin: 0 0 4px 0;
+  margin: 0 0 5px 0;
   padding-bottom: 2px;
 }
 
 .calendar-tomorrow-heading {
-  font-size: 8pt;
+  font-size: 9pt;
   border-bottom: 1px solid #aaa;
   color: #555;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .cal-event {
   display: flex;
   gap: 6px;
-  margin-bottom: 2px;
-  font-size: 9.5pt;
+  margin-bottom: 3px;
+  font-size: 10.5pt;
 }
 
 .cal-time {
-  min-width: 58px;
+  min-width: 62px;
   color: #555;
-  font-size: 9pt;
+  font-size: 10pt;
 }
 
 .todo-item {
-  margin-bottom: 2px;
-  font-size: 9.5pt;
+  margin-bottom: 3px;
+  font-size: 10.5pt;
 }
 
 /* ── Sports ── */
 .sports-section {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .score-item {
-  margin-bottom: 2px;
-  font-size: 9.5pt;
+  margin-bottom: 3px;
+  font-size: 10.5pt;
 }
 
 /* ── News ── */
 .news-item {
-  margin-bottom: 2px;
-  font-size: 9pt;
+  margin-bottom: 3px;
+  font-size: 10pt;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -138,12 +138,12 @@ h2 {
 
 .news-label {
   color: #777;
-  font-size: 8pt;
+  font-size: 9pt;
 }
 
 .empty {
   color: #999;
   font-style: italic;
-  font-size: 9pt;
+  font-size: 10pt;
 }
 
