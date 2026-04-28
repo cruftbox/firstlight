@@ -29,6 +29,7 @@ def render_digest(data: dict, config: dict) -> bytes:
         weather=data.get("weather"),
         quote=data.get("quote"),
         calendar=data.get("calendar", []),
+        calendar_tomorrow=data.get("calendar_tomorrow", []),
         sports=data.get("sports", []),
         news=data.get("news", []),
         todos=data.get("todos", []),

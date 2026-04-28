@@ -6,8 +6,8 @@ TOKEN_PATH = Path("/app/config/google_token.json")
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
 
 
-def get_events(calendar_ids: list) -> list:
-    """Returns list of {"time", "title", "all_day"} for today. Returns [] on any failure."""
+def get_events(calendar_ids: list, day_offset: int = 0) -> list:
+    """Return list of {"time", "title", "all_day"} for today + day_offset. Returns [] on any failure."""
     creds = _get_credentials()
     if not creds:
         return []
@@ -19,8 +19,8 @@ def get_events(calendar_ids: list) -> list:
         logging.error("Calendar API build failed: %s", e)
         return []
 
-    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    tomorrow = today + timedelta(days=1)
+    day_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=day_offset)
+    day_end = day_start + timedelta(days=1)
     events = []
 
     for cal_id in calendar_ids:
@@ -29,8 +29,8 @@ def get_events(calendar_ids: list) -> list:
                 service.events()
                 .list(
                     calendarId=cal_id,
-                    timeMin=today.isoformat(),
-                    timeMax=tomorrow.isoformat(),
+                    timeMin=day_start.isoformat(),
+                    timeMax=day_end.isoformat(),
                     singleEvents=True,
                     orderBy="startTime",
                 )

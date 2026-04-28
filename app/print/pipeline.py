@@ -24,9 +24,11 @@ def collect_data(config: dict) -> dict:
             logging.warning("Quote provider failed: %s", e)
 
     calendar_data = []
+    calendar_tomorrow = []
     if config["calendar"]["enabled"]:
         try:
             calendar_data = cal_provider.get_events(config["calendar"]["calendar_ids"])
+            calendar_tomorrow = cal_provider.get_events(config["calendar"]["calendar_ids"], day_offset=1)
         except Exception as e:
             logging.warning("Calendar provider failed: %s", e)
 
@@ -50,6 +52,7 @@ def collect_data(config: dict) -> dict:
         "weather": weather_data,
         "quote": quote_data,
         "calendar": calendar_data,
+        "calendar_tomorrow": calendar_tomorrow,
         "sports": sports_data,
         "news": news_data,
         "todos": _load_todos(),

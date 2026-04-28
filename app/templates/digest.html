@@ -46,6 +46,15 @@
       {% else %}
       <div class="empty">No events today</div>
       {% endfor %}
+      {% if calendar_tomorrow %}
+      <h2 class="calendar-tomorrow-heading">TOMORROW</h2>
+      {% for event in calendar_tomorrow %}
+      <div class="cal-event">
+        <span class="cal-time">{{ event.time }}</span>
+        <span class="cal-title">{{ event.title }}</span>
+      </div>
+      {% endfor %}
+      {% endif %}
     </section>
 
     <section class="todo-section">

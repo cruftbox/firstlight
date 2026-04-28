@@ -92,6 +92,13 @@ h2 {
   padding-bottom: 2px;
 }
 
+.calendar-tomorrow-heading {
+  font-size: 8pt;
+  border-bottom: 1px solid #aaa;
+  color: #555;
+  margin-top: 6px;
+}
+
 .cal-event {
   display: flex;
   gap: 6px;
