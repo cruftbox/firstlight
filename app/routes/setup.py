@@ -141,14 +141,13 @@ def step6():
 def calendar_authorize():
     from pathlib import Path
     from google_auth_oauthlib.flow import Flow
+    import html as html_mod
 
     creds_path = Path("/app/config/google_credentials.json")
     if not creds_path.exists():
-        return redirect(url_for("setup.step6") + "?error=Credentials+not+saved+yet")
+        return redirect(url_for("setup.step6") + "?" + urlencode({"error": "Credentials not saved yet"}))
 
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-    # Build callback URL from the live request so it matches what the browser uses.
-    # url_for(..., _external=True) can generate http://0.0.0.0:... inside Docker.
     callback_url = request.url_root.rstrip("/") + "/setup/6/callback"
     logging.info("Calendar OAuth authorize — callback_url: %s", callback_url)
     flow = Flow.from_client_secrets_file(
@@ -159,7 +158,25 @@ def calendar_authorize():
     auth_url, state = flow.authorization_url(access_type="offline", prompt="consent")
     session["oauth_state"] = state
     session["oauth_redirect_uri"] = callback_url
-    return redirect(auth_url)
+
+    # Werkzeug's redirect() mangles external https:// URLs in newer versions,
+    # causing the browser to request them as relative paths. Serve an HTML page
+    # that navigates directly instead.
+    safe_url = html_mod.escape(auth_url)
+    return f"""<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta http-equiv="refresh" content="1; url={safe_url}">
+<title>Redirecting to Google…</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head><body class="bg-light">
+<div class="container py-5" style="max-width:640px;">
+<div class="card shadow-sm"><div class="card-body p-4 text-center">
+<h5 class="mb-3">Redirecting to Google…</h5>
+<p class="text-muted">If you are not redirected automatically:</p>
+<a href="{safe_url}" class="btn btn-primary">Sign in with Google →</a>
+</div></div></div>
+</body></html>"""
 
 
 @setup_bp.route("/6/callback")
