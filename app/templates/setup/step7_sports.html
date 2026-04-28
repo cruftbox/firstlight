@@ -24,3 +24,6 @@
   <button type="submit" class="btn btn-primary w-100 mt-2">Continue →</button>
 </form>
 {% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/sports-autocomplete.js') }}"></script>
+{% endblock %}
