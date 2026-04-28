@@ -130,10 +130,31 @@ def step6():
                 token_path.unlink()
         return redirect(url_for("setup.step6"))
 
+    # Pre-generate the Google auth URL so the template can link directly to it.
+    # This avoids any Flask/Werkzeug redirect handling that mangles https:// URLs.
+    auth_url = None
+    if creds_path.exists() and not token_path.exists():
+        try:
+            from google_auth_oauthlib.flow import Flow
+            os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+            callback_url = request.url_root.rstrip("/") + "/setup/6/callback"
+            flow = Flow.from_client_secrets_file(
+                str(creds_path),
+                scopes=["https://www.googleapis.com/auth/calendar.readonly"],
+                redirect_uri=callback_url,
+            )
+            auth_url, state = flow.authorization_url(access_type="offline", prompt="consent")
+            session["oauth_state"] = state
+            session["oauth_redirect_uri"] = callback_url
+            logging.info("Step6 generated auth_url starting: %s", auth_url[:60])
+        except Exception as exc:
+            logging.error("Failed to generate OAuth URL: %s", exc)
+            error = error or str(exc)[:200]
+
     return render_template(
         "setup/step6_calendar.html", config=cfg,
         creds_exist=creds_path.exists(), token_exist=token_path.exists(),
-        error=error, authorized=authorized,
+        error=error, authorized=authorized, auth_url=auth_url,
     )
 
 

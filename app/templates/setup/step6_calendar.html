@@ -43,7 +43,11 @@
   redirected back here automatically.
 </p>
 <div class="d-grid gap-2">
-  <a href="/setup/6/authorize" class="btn btn-primary">Authorize Google Calendar →</a>
+  {% if auth_url %}
+  <a href="{{ auth_url }}" class="btn btn-primary">Authorize Google Calendar →</a>
+  {% else %}
+  <a href="/setup/6" class="btn btn-primary">Reload to generate auth link</a>
+  {% endif %}
   <button type="submit" form="skipForm" name="action" value="skip" class="btn btn-outline-secondary">Skip</button>
 </div>
 <form id="skipForm" method="POST"></form>
