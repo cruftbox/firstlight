@@ -156,6 +156,7 @@ def step6():
             auth_url, state = flow.authorization_url(access_type="offline", prompt="consent")
             session["oauth_state"] = state
             session["oauth_redirect_uri"] = callback_url
+            session["oauth_code_verifier"] = getattr(flow, "code_verifier", None)
             logging.info("Step6 generated auth_url starting: %s", auth_url[:60])
         except Exception as exc:
             logging.error("Failed to generate OAuth URL: %s", exc)
@@ -233,6 +234,9 @@ def calendar_callback():
         redirect_uri=redirect_uri,
         state=session.get("oauth_state"),
     )
+    code_verifier = session.get("oauth_code_verifier")
+    if code_verifier:
+        flow.code_verifier = code_verifier
 
     try:
         flow.fetch_token(authorization_response=request.url)
