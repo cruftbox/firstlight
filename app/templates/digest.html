@@ -23,20 +23,13 @@
       {{ weather.condition }}
     </div>
     <div class="weather-meta">
-      {% if weather.sunrise %}🌅 {{ weather.sunrise }} &nbsp;·&nbsp; 🌇 {{ weather.sunset }}{% endif %}
+      {% if weather.sunrise %}Sunrise {{ weather.sunrise }} &nbsp;·&nbsp; Sunset {{ weather.sunset }}{% endif %}
       {% if weather.aqi is not none and config.weather.show_aqi %} &nbsp;·&nbsp; AQI {{ weather.aqi }} — {{ weather.aqi_label }}{% endif %}
       {% if weather.wind %} &nbsp;·&nbsp; Wind {{ weather.wind }}{{ ' mph' if config.weather.units == 'imperial' else ' km/h' }}{% endif %}
     </div>
     {% if weather.rain_days and config.weather.show_rain_forecast %}
     <div class="rain-alert">&#127783; Rain expected: {{ weather.rain_days | join(', ') }}</div>
     {% endif %}
-    <div class="hourly-strip">
-      {% for h in weather.hourly %}
-      <span class="hour-chip">
-        {{ (h.hour % 12) or 12 }}{{ 'am' if h.hour < 12 else 'pm' }} {{ h.temp }}°
-      </span>
-      {% endfor %}
-    </div>
     {% endif %}
   </section>
 
