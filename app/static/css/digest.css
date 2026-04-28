@@ -80,8 +80,9 @@ body.digest {
 /* ── Weather ── */
 .weather-section {
   background: #f4f4f4;
-  padding: 8px 10px;
+  padding: 8px 0;
   margin-bottom: 12px;
+  border-bottom: 1px solid #ccc;
 }
 
 .weather-main {
