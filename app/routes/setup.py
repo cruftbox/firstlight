@@ -201,7 +201,7 @@ def calendar_callback():
 def step7():
     cfg = load_config()
     if request.method == "POST":
-        for league in ["mlb", "nfl", "nba", "wnba", "mls", "premier_league"]:
+        for league in ["mlb", "nfl", "nba", "nhl", "wnba", "mls", "premier_league"]:
             raw = request.form.get(league, "").strip()
             cfg["sports"][league] = [t.strip() for t in raw.split(",") if t.strip()]
         save_config(cfg)
