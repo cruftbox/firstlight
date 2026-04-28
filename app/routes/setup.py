@@ -163,18 +163,42 @@ def step9():
 
 @setup_bp.route("/9/test-email", methods=["POST"])
 def test_email():
-    from app.print.emailer import send
+    import smtplib
+    from email.message import EmailMessage
     data = request.get_json(silent=True) or {}
-    email_config = {
-        "smtp_host": data.get("smtp_host", ""),
-        "smtp_port": int(data.get("smtp_port") or 587),
-        "smtp_user": data.get("smtp_user", ""),
-        "smtp_password": data.get("smtp_password", ""),
-        "from_address": data.get("from_address", ""),
-        "to_address": data.get("to_address", ""),
-    }
-    ok = send(b"Test email from Firstlight setup.", date.today(), email_config)
-    return jsonify({"ok": ok})
+    cfg = load_config()
+
+    # Password field is type=password so browsers never pre-fill it.
+    # Fall back to the saved value when the form field is left blank.
+    password = data.get("smtp_password") or cfg["email"]["smtp_password"]
+
+    host = data.get("smtp_host", "")
+    port = int(data.get("smtp_port") or 587)
+    user = data.get("smtp_user", "")
+    from_addr = data.get("from_address", "")
+    to_addr = data.get("to_address", "")
+
+    msg = EmailMessage()
+    msg["Subject"] = "Firstlight — test email"
+    msg["From"] = from_addr
+    msg["To"] = to_addr
+    msg.set_content("This is a test email from Firstlight. Your delivery settings are working.")
+
+    try:
+        if port == 465:
+            with smtplib.SMTP_SSL(host, port) as smtp:
+                if user:
+                    smtp.login(user, password)
+                smtp.send_message(msg)
+        else:
+            with smtplib.SMTP(host, port) as smtp:
+                smtp.starttls()
+                if user:
+                    smtp.login(user, password)
+                smtp.send_message(msg)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
 
 
 @setup_bp.route("/10", methods=["GET", "POST"])

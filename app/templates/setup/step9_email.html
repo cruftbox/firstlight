@@ -5,37 +5,40 @@
 {% block content %}
 <p class="text-muted">Send your digest as a PDF attachment each morning. Skip to use archive/print only.</p>
 <div class="alert alert-info small">
-  <strong>Gmail users:</strong> Use an App Password.
+  <strong>Gmail users:</strong> Use an App Password — your regular Gmail password won't work.
   <a href="https://myaccount.google.com/apppasswords" target="_blank">Create one here</a>,
-  then use <code>smtp.gmail.com</code>, port 587, your Gmail address, and the App Password.
+  then use <code>smtp.gmail.com</code>, port 587, your Gmail address as the username, and the App Password.
 </div>
 <form method="POST" id="emailForm">
   <div class="row g-2 mb-2">
     <div class="col-8">
-      <label class="form-label">SMTP Host</label>
-      <input type="text" name="smtp_host" class="form-control" placeholder="smtp.gmail.com" value="{{ config.email.smtp_host }}">
+      <label class="form-label">SMTP Server <span class="text-muted fw-normal small">(your outgoing mail server)</span></label>
+      <input type="text" name="smtp_host" class="form-control" placeholder="e.g. smtp.gmail.com or mail.yourdomain.com" value="{{ config.email.smtp_host }}">
     </div>
     <div class="col-4">
       <label class="form-label">Port</label>
       <input type="number" name="smtp_port" class="form-control" value="{{ config.email.smtp_port }}">
+      <div class="form-text">587 = STARTTLS &nbsp;·&nbsp; 465 = SSL</div>
     </div>
   </div>
   <div class="mb-2">
-    <label class="form-label">Username</label>
-    <input type="text" name="smtp_user" class="form-control" placeholder="you@gmail.com" value="{{ config.email.smtp_user }}">
+    <label class="form-label">Login username <span class="text-muted fw-normal small">(usually your email address)</span></label>
+    <input type="text" name="smtp_user" class="form-control" placeholder="you@yourdomain.com" value="{{ config.email.smtp_user }}" autocomplete="username">
   </div>
   <div class="mb-2">
-    <label class="form-label">Password / App Password</label>
-    <input type="password" name="smtp_password" class="form-control" placeholder="Leave blank to keep current">
+    <label class="form-label">Password <span class="text-muted fw-normal small">(or App Password for Gmail)</span></label>
+    <input type="password" name="smtp_password" class="form-control"
+           placeholder="{% if config.email.smtp_password %}Saved — leave blank to keep current{% else %}Enter password{% endif %}"
+           autocomplete="current-password">
   </div>
   <div class="row g-2 mb-3">
     <div class="col-6">
-      <label class="form-label">From</label>
-      <input type="email" name="from_address" class="form-control" value="{{ config.email.from_address }}">
+      <label class="form-label">Send from <span class="text-muted fw-normal small">(sender address)</span></label>
+      <input type="email" name="from_address" class="form-control" placeholder="digest@yourdomain.com" value="{{ config.email.from_address }}">
     </div>
     <div class="col-6">
-      <label class="form-label">To</label>
-      <input type="email" name="to_address" class="form-control" value="{{ config.email.to_address }}">
+      <label class="form-label">Deliver to <span class="text-muted fw-normal small">(your inbox)</span></label>
+      <input type="email" name="to_address" class="form-control" placeholder="you@yourdomain.com" value="{{ config.email.to_address }}">
     </div>
   </div>
   <div id="testResult" class="mb-2"></div>
@@ -48,6 +51,10 @@
 <script>
 document.getElementById('testBtn').addEventListener('click', function() {
   const f = document.getElementById('emailForm');
+  const btn = this;
+  const result = document.getElementById('testResult');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
   fetch('/setup/9/test-email', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -60,9 +67,19 @@ document.getElementById('testBtn').addEventListener('click', function() {
       to_address: f.to_address.value,
     }),
   }).then(r => r.json()).then(d => {
-    document.getElementById('testResult').innerHTML = d.ok
-      ? '<div class="alert alert-success py-1">Test email sent!</div>'
-      : '<div class="alert alert-danger py-1">Failed. Check credentials and try again.</div>';
+    if (d.ok) {
+      result.innerHTML = '<div class="alert alert-success py-1">Test email sent!</div>';
+    } else {
+      const div = document.createElement('div');
+      div.className = 'alert alert-danger py-1';
+      div.textContent = 'Failed: ' + (d.error || 'unknown error');
+      result.replaceChildren(div);
+    }
+  }).catch(() => {
+    result.innerHTML = '<div class="alert alert-danger py-1">Request failed — is the server running?</div>';
+  }).finally(() => {
+    btn.disabled = false;
+    btn.textContent = 'Send test email';
   });
 });
 </script>
