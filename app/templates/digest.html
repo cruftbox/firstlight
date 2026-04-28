@@ -23,7 +23,7 @@
       {{ weather.condition }}
     </div>
     <div class="weather-meta">
-      {% if weather.sunrise %}&#9728; {{ weather.sunrise }} &nbsp;·&nbsp; &#9790; {{ weather.sunset }}{% endif %}
+      {% if weather.sunrise %}🌅 {{ weather.sunrise }} &nbsp;·&nbsp; 🌇 {{ weather.sunset }}{% endif %}
       {% if weather.aqi is not none and config.weather.show_aqi %} &nbsp;·&nbsp; AQI {{ weather.aqi }} — {{ weather.aqi_label }}{% endif %}
       {% if weather.wind %} &nbsp;·&nbsp; Wind {{ weather.wind }}{{ ' mph' if config.weather.units == 'imperial' else ' km/h' }}{% endif %}
     </div>
