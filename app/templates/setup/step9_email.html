@@ -5,9 +5,12 @@
 {% block content %}
 <p class="text-muted">Send your digest as a PDF attachment each morning. Skip to use archive/print only.</p>
 <div class="alert alert-info small">
-  <strong>Gmail users:</strong> Use an App Password — your regular Gmail password won't work.
+  <strong>Gmail (personal accounts):</strong> Use an App Password — your regular password won't work.
+  Requires 2-Step Verification to be enabled first.
   <a href="https://myaccount.google.com/apppasswords" target="_blank">Create one here</a>,
   then use <code>smtp.gmail.com</code>, port 587, your Gmail address as the username, and the App Password.
+  <br><strong>Google Workspace accounts:</strong> App Passwords were discontinued in March 2025.
+  Use a transactional email service (Mailgun, Postmark, Brevo) instead — free tiers work well.
 </div>
 <form method="POST" id="emailForm">
   <div class="row g-2 mb-2">
@@ -39,6 +42,7 @@
     <div class="col-6">
       <label class="form-label">Deliver to <span class="text-muted fw-normal small">(your inbox)</span></label>
       <input type="email" name="to_address" class="form-control" placeholder="you@yourdomain.com" value="{{ config.email.to_address }}">
+      <div class="form-text">On shared hosting (SiteWorx, cPanel), send to an external address or use Mailgun/Postmark to avoid local delivery conflicts.</div>
     </div>
   </div>
   <div id="testResult" class="mb-2"></div>
