@@ -243,18 +243,23 @@ def calendar_callback():
         creds = flow.credentials
         token_path.write_text(creds.to_json(), encoding="utf-8")
 
-        from googleapiclient.discovery import build
-        service = build("calendar", "v3", credentials=creds)
-        cal_list = service.calendarList().list().execute()
-        cal_ids = [c["id"] for c in cal_list.get("items", [])]
-
         cfg = load_config()
         cfg["calendar"]["enabled"] = True
-        cfg["calendar"]["calendar_ids"] = cal_ids
         save_config(cfg)
     except Exception as exc:
         logging.error("Calendar OAuth callback error: %s", exc)
         return redirect(url_for("setup.step6") + "?" + urlencode({"error": str(exc)[:300]}))
+
+    try:
+        from googleapiclient.discovery import build
+        service = build("calendar", "v3", credentials=creds)
+        cal_list = service.calendarList().list().execute()
+        cal_ids = [c["id"] for c in cal_list.get("items", [])]
+        cfg = load_config()
+        cfg["calendar"]["calendar_ids"] = cal_ids
+        save_config(cfg)
+    except Exception as exc:
+        logging.warning("Could not fetch calendar list (non-fatal): %s", exc)
 
     return redirect(url_for("setup.step6") + "?authorized=1")
 
