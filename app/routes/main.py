@@ -55,6 +55,9 @@ def settings():
         cfg["firstlight"]["printer"] = request.form.get("printer", "")
         cfg["firstlight"]["paper_size"] = request.form.get("paper_size", "letter")
         cfg["quote"]["enabled"] = request.form.get("quote_enabled") == "on"
+        cfg["history"]["enabled"] = request.form.get("history_enabled") == "on"
+        cfg["weather"]["show_aqi"] = request.form.get("show_aqi") == "on"
+        cfg["weather"]["show_rain_forecast"] = request.form.get("show_rain_forecast") == "on"
         cfg["archive"]["enabled"] = request.form.get("archive_enabled") == "on"
         cfg["archive"]["retention_days"] = int(request.form.get("retention_days", 30))
         cfg["email"]["enabled"] = request.form.get("email_enabled") == "on"

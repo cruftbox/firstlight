@@ -48,11 +48,12 @@ def collect_data(config: dict) -> dict:
         logging.warning("News provider failed: %s", e)
         news_data = []
 
-    try:
-        history_data = history.get_events()
-    except Exception as e:
-        logging.warning("History provider failed: %s", e)
-        history_data = []
+    history_data = []
+    if config.get("history", {}).get("enabled", True):
+        try:
+            history_data = history.get_events()
+        except Exception as e:
+            logging.warning("History provider failed: %s", e)
 
     return {
         "weather": weather_data,

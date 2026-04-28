@@ -16,7 +16,7 @@ DEFAULT_CONFIG = {
         "printer": "",
     },
     "location": {"city": "", "lat": 0.0, "lon": 0.0},
-    "weather": {"units": "imperial"},
+    "weather": {"units": "imperial", "show_aqi": True, "show_rain_forecast": True},
     "quote": {"enabled": True},
     "archive": {"enabled": True, "retention_days": 30},
     "email": {
@@ -33,6 +33,7 @@ DEFAULT_CONFIG = {
         "google_credentials": "",
         "calendar_ids": ["primary"],
     },
+    "history": {"enabled": True},
     "sports": {
         "mlb": [], "nfl": [], "nba": [], "nhl": [],
         "wnba": [], "mls": [], "premier_league": [],

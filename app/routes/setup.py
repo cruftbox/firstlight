@@ -89,6 +89,9 @@ def step5():
     cfg = load_config()
     if request.method == "POST":
         cfg["quote"]["enabled"] = request.form.get("quote_enabled") == "on"
+        cfg["history"]["enabled"] = request.form.get("history_enabled") == "on"
+        cfg["weather"]["show_aqi"] = request.form.get("show_aqi") == "on"
+        cfg["weather"]["show_rain_forecast"] = request.form.get("show_rain_forecast") == "on"
         save_config(cfg)
         return redirect(url_for("setup.step6"))
     preview_quote = None

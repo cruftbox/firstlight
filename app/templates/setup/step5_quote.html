@@ -1,20 +1,52 @@
 {% extends "setup/base.html" %}
 {% block step_num %}5{% endblock %}
 {% block progress_pct %}50{% endblock %}
-{% block step_title %}Quote of the Day{% endblock %}
+{% block step_title %}Daily Content{% endblock %}
 {% block content %}
-<p class="text-muted">A daily quote appears below the date header on your digest. No account or API key required.</p>
-{% if preview_quote %}
-<div class="p-3 mb-3 bg-light border rounded fst-italic text-muted small">
-  "{{ preview_quote.text }}" — {{ preview_quote.author }}
-</div>
-{% endif %}
+<p class="text-muted">Choose which optional content sections appear on your digest. All use free, no-login APIs.</p>
 <form method="POST">
-  <div class="form-check form-switch mb-3">
-    <input class="form-check-input" type="checkbox" name="quote_enabled"
-           id="quoteToggle" {% if config.quote.enabled %}checked{% endif %}>
-    <label class="form-check-label" for="quoteToggle">Enable quote of the day</label>
+
+  <div class="border rounded p-3 mb-3">
+    <div class="form-check form-switch mb-1">
+      <input class="form-check-input" type="checkbox" name="quote_enabled"
+             id="quoteToggle" {% if config.quote.enabled %}checked{% endif %}>
+      <label class="form-check-label fw-semibold" for="quoteToggle">Quote of the day</label>
+    </div>
+    <div class="text-muted small ms-4">A short inspirational or witty quote below the date header.</div>
+    {% if preview_quote %}
+    <div class="ms-4 mt-2 fst-italic text-muted small">
+      "{{ preview_quote.text }}" — {{ preview_quote.author }}
+    </div>
+    {% endif %}
   </div>
+
+  <div class="border rounded p-3 mb-3">
+    <div class="form-check form-switch mb-1">
+      <input class="form-check-input" type="checkbox" name="history_enabled"
+             id="historyToggle" {% if config.history.enabled %}checked{% endif %}>
+      <label class="form-check-label fw-semibold" for="historyToggle">On this day in history</label>
+    </div>
+    <div class="text-muted small ms-4">Two historical events from today's date via Wikipedia. Changes daily.</div>
+  </div>
+
+  <div class="border rounded p-3 mb-3">
+    <div class="form-check form-switch mb-1">
+      <input class="form-check-input" type="checkbox" name="show_aqi"
+             id="aqiToggle" {% if config.weather.show_aqi %}checked{% endif %}>
+      <label class="form-check-label fw-semibold" for="aqiToggle">Air quality index (AQI)</label>
+    </div>
+    <div class="text-muted small ms-4">US AQI shown in the weather bar. Useful for areas with occasional poor air quality.</div>
+  </div>
+
+  <div class="border rounded p-3 mb-4">
+    <div class="form-check form-switch mb-1">
+      <input class="form-check-input" type="checkbox" name="show_rain_forecast"
+             id="rainToggle" {% if config.weather.show_rain_forecast %}checked{% endif %}>
+      <label class="form-check-label fw-semibold" for="rainToggle">Rain forecast alert</label>
+    </div>
+    <div class="text-muted small ms-4">Highlights any rain predicted in the next 3 days.</div>
+  </div>
+
   <button type="submit" class="btn btn-primary w-100">Continue →</button>
 </form>
 {% endblock %}
