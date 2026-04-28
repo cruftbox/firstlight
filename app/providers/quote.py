@@ -1,14 +1,19 @@
 import requests
-from datetime import date
+from datetime import datetime
 from threading import Lock
+import pytz
 
 _cache: dict = {"date": None, "data": None}
 _cache_lock = Lock()
 
 
-def get_quote() -> dict | None:
+def get_quote(tz_str: str = "UTC") -> dict | None:
     """Returns {"text": str, "author": str} or None on failure. Cached daily."""
-    today = date.today().isoformat()
+    try:
+        tz = pytz.timezone(tz_str)
+    except Exception:
+        tz = pytz.utc
+    today = datetime.now(tz).date().isoformat()
     with _cache_lock:
         if _cache["date"] == today:
             return _cache["data"]

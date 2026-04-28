@@ -16,10 +16,11 @@ def collect_data(config: dict) -> dict:
         except Exception as e:
             logging.warning("Weather provider failed: %s", e)
 
+    tz_str = config["firstlight"]["timezone"]
     quote_data = None
     if config["quote"]["enabled"]:
         try:
-            quote_data = quote.get_quote()
+            quote_data = quote.get_quote(tz_str)
         except Exception as e:
             logging.warning("Quote provider failed: %s", e)
 
@@ -27,7 +28,6 @@ def collect_data(config: dict) -> dict:
     calendar_tomorrow = []
     if config["calendar"]["enabled"]:
         try:
-            tz_str = config["firstlight"]["timezone"]
             calendar_data = cal_provider.get_events(config["calendar"]["calendar_ids"], timezone_str=tz_str)
             calendar_tomorrow = cal_provider.get_events(config["calendar"]["calendar_ids"], day_offset=1, timezone_str=tz_str)
         except Exception as e:
@@ -52,7 +52,7 @@ def collect_data(config: dict) -> dict:
     history_data = []
     if config.get("history", {}).get("enabled", True):
         try:
-            history_data = history.get_events()
+            history_data = history.get_events(tz_str=tz_str)
         except Exception as e:
             logging.warning("History provider failed: %s", e)
 

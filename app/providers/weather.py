@@ -77,6 +77,7 @@ def get_forecast(lat: float, lon: float, units: str = "imperial") -> dict | None
         entry = _cache.get(cache_key)
         if entry and time.time() - entry["ts"] < CACHE_TTL:
             return entry["data"]
+        stale = entry["data"] if entry else None
 
     temp_unit = "fahrenheit" if units == "imperial" else "celsius"
     params = {
@@ -94,7 +95,7 @@ def get_forecast(lat: float, lon: float, units: str = "imperial") -> dict | None
         resp.raise_for_status()
         raw = resp.json()
     except Exception:
-        return None
+        return stale
 
     current = raw.get("current", {})
     code = current.get("weathercode", 0)
