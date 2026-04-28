@@ -46,36 +46,31 @@ body.digest {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
 
 /* ── On This Day ── */
 .history-section {
-  font-size: 9pt;
+  font-size: 9.5pt;
   color: #444;
   border-left: 3px solid #bbb;
-  padding: 3px 8px;
+  padding: 4px 8px;
   margin-bottom: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 16px;
-  align-items: baseline;
 }
 
 .history-label {
+  display: block;
   font-weight: bold;
   font-size: 8pt;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #888;
-  margin-right: 4px;
-  white-space: nowrap;
+  margin-bottom: 2px;
 }
 
 .history-item {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: block;
+  margin-bottom: 2px;
 }
 
 .history-year {
@@ -154,7 +149,8 @@ h2 {
 }
 
 .cal-time {
-  min-width: 62px;
+  min-width: 76px;
+  flex-shrink: 0;
   color: #555;
   font-size: 10pt;
 }
@@ -176,8 +172,8 @@ h2 {
 
 /* ── News ── */
 .news-item {
-  margin-bottom: 3px;
-  font-size: 10pt;
+  margin-bottom: 2px;
+  font-size: 9.5pt;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

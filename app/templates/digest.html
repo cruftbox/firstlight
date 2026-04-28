@@ -39,9 +39,9 @@
 
   {% if history %}
   <section class="history-section">
-    <span class="history-label">ON THIS DAY</span>
+    <div class="history-label">ON THIS DAY</div>
     {% for event in history %}
-    <span class="history-item"><span class="history-year">{{ event.year }}</span> — {{ event.text }}</span>
+    <div class="history-item"><span class="history-year">{{ event.year }}</span> — {{ event.text }}</div>
     {% endfor %}
   </section>
   {% endif %}
