@@ -1,8 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from datetime import date
 import json
+import logging
 import os
 import pytz
+from urllib.parse import urlencode
 from app.config import load as load_config, save as save_config
 
 
@@ -145,7 +147,10 @@ def calendar_authorize():
         return redirect(url_for("setup.step6") + "?error=Credentials+not+saved+yet")
 
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-    callback_url = url_for("setup.calendar_callback", _external=True)
+    # Build callback URL from the live request so it matches what the browser uses.
+    # url_for(..., _external=True) can generate http://0.0.0.0:... inside Docker.
+    callback_url = request.url_root.rstrip("/") + "/setup/6/callback"
+    logging.info("Calendar OAuth authorize — callback_url: %s", callback_url)
     flow = Flow.from_client_secrets_file(
         str(creds_path),
         scopes=["https://www.googleapis.com/auth/calendar.readonly"],
@@ -169,7 +174,11 @@ def calendar_callback():
         return redirect(url_for("setup.step6") + "?error=Credentials+not+found")
 
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-    redirect_uri = session.get("oauth_redirect_uri") or url_for("setup.calendar_callback", _external=True)
+    redirect_uri = session.get("oauth_redirect_uri") or (
+        request.url_root.rstrip("/") + "/setup/6/callback"
+    )
+    logging.info("Calendar OAuth callback — redirect_uri: %s  request.url: %s",
+                 redirect_uri, request.url)
     flow = Flow.from_client_secrets_file(
         str(creds_path),
         scopes=["https://www.googleapis.com/auth/calendar.readonly"],
@@ -192,7 +201,8 @@ def calendar_callback():
         cfg["calendar"]["calendar_ids"] = cal_ids
         save_config(cfg)
     except Exception as exc:
-        return redirect(url_for("setup.step6") + f"?error={str(exc)[:120]}")
+        logging.error("Calendar OAuth callback error: %s", exc)
+        return redirect(url_for("setup.step6") + "?" + urlencode({"error": str(exc)[:300]}))
 
     return redirect(url_for("setup.step6") + "?authorized=1")
 
