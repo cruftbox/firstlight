@@ -1,0 +1,131 @@
+{
+  "planPath": "docs/superpowers/plans/2026-04-27-firstlight.md",
+  "tasks": [
+    {
+      "id": 1,
+      "subject": "Task 1: Project Scaffold & Docker Config",
+      "status": "completed",
+      "description": "**Goal:** Create the complete directory structure, Docker files, requirements, and .gitignore so `docker compose build` succeeds.\n\n**Files:**\n- Create: `.gitignore`, `Dockerfile`, `docker-compose.yml`, `requirements.txt`\n- Create: `app/__init__.py`, `app/config.py` (stubs), `app/routes/__init__.py`, `app/providers/__init__.py`, `app/print/__init__.py`\n- Create: `tests/__init__.py`, `tests/test_config.py` (stub), `config/.gitkeep`\n\n**Verify:** `docker compose build` → no errors\n\n```json:metadata\n{\"files\": [\".gitignore\",\"Dockerfile\",\"docker-compose.yml\",\"requirements.txt\",\"app/__init__.py\",\"app/config.py\",\"tests/test_config.py\"], \"verifyCommand\": \"docker compose build\", \"acceptanceCriteria\": [\"docker compose build succeeds\",\"key libraries import correctly\",\"config/ not committed\"]}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Config Module",
+      "status": "completed",
+      "blockedBy": [1],
+      "description": "**Goal:** Implement `app/config.py` — load, save, and deep-merge YAML config with full defaults — with tests.\n\n**Files:**\n- Modify: `app/config.py`\n- Modify: `tests/test_config.py`\n\n**Verify:** `docker compose run --rm firstlight pytest tests/test_config.py -v` → all PASSED\n\n```json:metadata\n{\"files\": [\"app/config.py\",\"tests/test_config.py\"], \"verifyCommand\": \"docker compose run --rm firstlight pytest tests/test_config.py -v\", \"acceptanceCriteria\": [\"load() returns defaults when no file\",\"load() deep-merges partial YAML\",\"save() round-trips correctly\",\"save() creates parent dirs\",\"all 4 tests pass\"]}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Flask App Factory + Base Templates",
+      "status": "completed",
+      "blockedBy": [2],
+      "description": "**Goal:** Wire up Flask app factory with blueprint registration, first-run redirect, base templates, no-op scheduler stub.\n\n**Files:**\n- Modify: `app/__init__.py`\n- Create: `app/scheduler.py` (no-op stub), route stubs, base templates, `app/static/css/app.css`\n\n**Verify:** `docker compose run --rm firstlight python -c \"from app import create_app; app = create_app(); print('OK')\"` → `OK`\n\n```json:metadata\n{\"files\": [\"app/__init__.py\",\"app/scheduler.py\",\"app/routes/setup.py\",\"app/routes/main.py\",\"app/templates/base.html\",\"app/templates/setup/base.html\",\"app/static/css/app.css\"], \"verifyCommand\": \"docker compose run --rm firstlight python -c \\\"from app import create_app; app = create_app(); print('OK')\\\"\", \"acceptanceCriteria\": [\"app factory imports cleanly\",\"/ redirects to /setup/1 when setup incomplete\",\"Bootstrap navbar visible\"]}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Setup Wizard (Steps 1-10)",
+      "status": "completed",
+      "blockedBy": [3],
+      "description": "**Goal:** Implement all 10 setup wizard steps — route handlers, forms, and templates — that progressively configure `firstlight.yaml`.\n\n**Files:**\n- Modify: `app/routes/setup.py`\n- Create: `app/templates/setup/step2_location.html` through `step10_review.html`\n\n**Verify:** Manual wizard run + check `setup_complete: true` in config\n\n```json:metadata\n{\"files\": [\"app/routes/setup.py\",\"app/templates/setup/step2_location.html\",\"app/templates/setup/step3_printtime.html\",\"app/templates/setup/step4_printer.html\",\"app/templates/setup/step5_quote.html\",\"app/templates/setup/step6_calendar.html\",\"app/templates/setup/step7_sports.html\",\"app/templates/setup/step8_news.html\",\"app/templates/setup/step9_email.html\",\"app/templates/setup/step10_review.html\"], \"verifyCommand\": \"\", \"acceptanceCriteria\": [\"all 10 steps complete\",\"setup_complete set to true\",\"skip buttons work\",\"step 2 geocodes city\"]}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: Weather Provider",
+      "status": "pending",
+      "blockedBy": [4],
+      "description": "**Goal:** Implement `app/providers/weather.py` — Open-Meteo geocoding and forecast with 30-minute cache — with mocked HTTP tests.\n\n**Files:**\n- Create: `app/providers/weather.py`\n- Create: `tests/test_providers.py`\n\n**Verify:** `docker compose run --rm firstlight pytest tests/test_providers.py -v` → all PASSED\n\n```json:metadata\n{\"files\": [\"app/providers/weather.py\",\"tests/test_providers.py\"], \"verifyCommand\": \"docker compose run --rm firstlight pytest tests/test_providers.py -v\", \"acceptanceCriteria\": [\"geocode returns correct structure\",\"geocode returns None for unknown city\",\"get_forecast returns expected keys\",\"caching works\",\"graceful error handling\",\"all 5 tests pass\"]}\n```"
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: Quote Provider",
+      "status": "pending",
+      "blockedBy": [5],
+      "description": "**Goal:** Implement `app/providers/quote.py` — ZenQuotes daily quote with date-keyed cache — with tests.\n\n**Files:**\n- Create: `app/providers/quote.py`\n- Modify: `tests/test_providers.py`\n\n**Verify:** `docker compose run --rm firstlight pytest tests/test_providers.py -k quote -v` → all PASSED\n\n```json:metadata\n{\"files\": [\"app/providers/quote.py\",\"tests/test_providers.py\"], \"verifyCommand\": \"docker compose run --rm firstlight pytest tests/test_providers.py -k quote -v\", \"acceptanceCriteria\": [\"get_quote returns text and author\",\"daily cache works\",\"returns None on error\"]}\n```"
+    },
+    {
+      "id": 7,
+      "subject": "Task 7: News Provider",
+      "status": "pending",
+      "blockedBy": [6],
+      "description": "**Goal:** Implement `app/providers/news.py` — feedparser with age filtering and title deduplication — with tests.\n\n**Files:**\n- Create: `app/providers/news.py`\n- Modify: `tests/test_providers.py`\n\n**Verify:** `docker compose run --rm firstlight pytest tests/test_providers.py -k news -v` → all PASSED\n\n```json:metadata\n{\"files\": [\"app/providers/news.py\",\"tests/test_providers.py\"], \"verifyCommand\": \"docker compose run --rm firstlight pytest tests/test_providers.py -k news -v\", \"acceptanceCriteria\": [\"returns items from feeds\",\"filters old entries\",\"deduplicates by title\",\"respects max_items\",\"handles broken feeds\"]}\n```"
+    },
+    {
+      "id": 8,
+      "subject": "Task 8: Sports Provider",
+      "status": "pending",
+      "blockedBy": [7],
+      "description": "**Goal:** Implement `app/providers/sports.py` — ESPN API with https endpoints, multi-team matching — with tests.\n\n**Files:**\n- Create: `app/providers/sports.py`\n- Modify: `tests/test_providers.py`\n\n**Verify:** `docker compose run --rm firstlight pytest tests/test_providers.py -k sports -v` → all PASSED\n\n```json:metadata\n{\"files\": [\"app/providers/sports.py\",\"tests/test_providers.py\"], \"verifyCommand\": \"docker compose run --rm firstlight pytest tests/test_providers.py -k sports -v\", \"acceptanceCriteria\": [\"final game shows score and Final\",\"upcoming game shows name and time\",\"no match returns empty\",\"empty config makes no HTTP\",\"network error returns empty\",\"all endpoints use https\"]}\n```"
+    },
+    {
+      "id": 9,
+      "subject": "Task 9: Calendar Provider",
+      "status": "pending",
+      "blockedBy": [8],
+      "description": "**Goal:** Implement `app/providers/calendar.py` — Google Calendar OAuth with token refresh — with tests.\n\n**Files:**\n- Create: `app/providers/calendar.py`\n- Modify: `tests/test_providers.py`\n\n**Verify:** `docker compose run --rm firstlight pytest tests/test_providers.py -k calendar -v` → all PASSED\n\n```json:metadata\n{\"files\": [\"app/providers/calendar.py\",\"tests/test_providers.py\"], \"verifyCommand\": \"docker compose run --rm firstlight pytest tests/test_providers.py -k calendar -v\", \"acceptanceCriteria\": [\"returns empty when no token\",\"returns empty on invalid token\",\"returns event list with valid creds\"]}\n```"
+    },
+    {
+      "id": 10,
+      "subject": "Task 10: Digest Template & CSS",
+      "status": "completed",
+      "blockedBy": [9],
+      "description": "**Goal:** Create `digest.html` and `digest.css` — single-page print layout with all sections including quote line.\n\n**Files:**\n- Create: `app/templates/digest.html`\n- Create: `app/static/css/digest.css`\n\n**Verify:** Visual — validated with renderer in Task 11.\n\n```json:metadata\n{\"files\": [\"app/templates/digest.html\",\"app/static/css/digest.css\"], \"verifyCommand\": \"\", \"acceptanceCriteria\": [\"quote line conditional on data\",\"two-column grid layout\",\"sports/news sections conditional\",\"@page margins set\",\"quote line italic with ellipsis overflow\"]}\n```"
+    },
+    {
+      "id": 11,
+      "subject": "Task 11: PDF Renderer & /preview Route",
+      "status": "completed",
+      "blockedBy": [10],
+      "description": "**Goal:** Implement `app/print/renderer.py` (Jinja2+WeasyPrint), `app/print/pipeline.py` (data collection), wire up `/preview` route.\n\n**Files:**\n- Create: `app/print/renderer.py`\n- Create: `app/print/pipeline.py`\n- Modify: `app/routes/main.py`\n- Create: `tests/test_renderer.py`\n\n**Verify:** `docker compose run --rm firstlight pytest tests/test_renderer.py -v` → all PASSED\n\n```json:metadata\n{\"files\": [\"app/print/renderer.py\",\"app/print/pipeline.py\",\"app/routes/main.py\",\"tests/test_renderer.py\"], \"verifyCommand\": \"docker compose run --rm firstlight pytest tests/test_renderer.py -v\", \"acceptanceCriteria\": [\"render_digest returns %PDF bytes\",\"handles quote=None\",\"handles all sections populated\",\"3 tests pass\"]}\n```"
+    },
+    {
+      "id": 12,
+      "subject": "Task 12: Print Archive Module",
+      "status": "completed",
+      "blockedBy": [11],
+      "description": "**Goal:** Implement `app/print/archive.py` — save PDFs, clean up old files, list archives — with tests.\n\n**Files:**\n- Create: `app/print/archive.py`\n- Modify: `tests/test_renderer.py`\n\n**Verify:** `docker compose run --rm firstlight pytest tests/test_renderer.py -k archive -v` → all PASSED\n\n```json:metadata\n{\"files\": [\"app/print/archive.py\",\"tests/test_renderer.py\"], \"verifyCommand\": \"docker compose run --rm firstlight pytest tests/test_renderer.py -k archive -v\", \"acceptanceCriteria\": [\"save creates YYYY-MM-DD.pdf\",\"cleanup deletes old files\",\"list_all sorted newest-first\",\"save logs error without raising\",\"list_all returns [] when dir missing\"]}\n```"
+    },
+    {
+      "id": 13,
+      "subject": "Task 13: Email Module",
+      "status": "completed",
+      "blockedBy": [12],
+      "description": "**Goal:** Implement `app/print/emailer.py` — multipart email with PDF attachment via smtplib — with tests.\n\n**Files:**\n- Create: `app/print/emailer.py`\n- Modify: `tests/test_renderer.py`\n\n**Verify:** `docker compose run --rm firstlight pytest tests/test_renderer.py -k email -v` → all PASSED\n\n```json:metadata\n{\"files\": [\"app/print/emailer.py\",\"tests/test_renderer.py\"], \"verifyCommand\": \"docker compose run --rm firstlight pytest tests/test_renderer.py -k email -v\", \"acceptanceCriteria\": [\"port 465 uses SMTP_SSL\",\"other ports use SMTP+starttls\",\"empty user skips login\",\"correct subject format\",\"PDF attachment filename correct\",\"returns True/False never raises\"]}\n```"
+    },
+    {
+      "id": 14,
+      "subject": "Task 14: Printer Module",
+      "status": "completed",
+      "blockedBy": [13],
+      "description": "**Goal:** Implement `app/print/printer.py` — list CUPS printers via lpstat, submit jobs via lpr.\n\n**Files:**\n- Create: `app/print/printer.py`\n\n**Verify:** `docker compose run --rm firstlight python -c \"from app.print.printer import get_printers; print(get_printers())\"` → `[]`\n\n```json:metadata\n{\"files\": [\"app/print/printer.py\"], \"verifyCommand\": \"docker compose run --rm firstlight python -c \\\"from app.print.printer import get_printers; print(get_printers())\\\"\", \"acceptanceCriteria\": [\"get_printers parses lpstat output\",\"returns [] when CUPS unavailable\",\"print_pdf returns False for empty name\",\"lpr called with correct args\",\"temp file cleaned up\"]}\n```"
+    },
+    {
+      "id": 15,
+      "subject": "Task 15: Full Print Pipeline + /print Route + Scheduler",
+      "status": "completed",
+      "blockedBy": [14],
+      "description": "**Goal:** Replace no-op scheduler with real APScheduler, complete /print route, update /settings to save all config.\n\n**Files:**\n- Modify: `app/scheduler.py` (replace stub)\n- Modify: `app/routes/main.py`\n\n**Verify:** `curl -X POST http://localhost:5000/print` → `{\"status\":\"ok\"}` + archive PDF on disk\n\n```json:metadata\n{\"files\": [\"app/scheduler.py\",\"app/routes/main.py\"], \"verifyCommand\": \"curl -X POST http://localhost:5000/print\", \"acceptanceCriteria\": [\"POST /print returns status ok\",\"archive PDF created on disk\",\"scheduler starts with app\",\"reschedule replaces job\",\"pipeline errors logged not raised\"]}\n```"
+    },
+    {
+      "id": 16,
+      "subject": "Task 16: Archive Routes & Template",
+      "status": "completed",
+      "blockedBy": [15],
+      "description": "**Goal:** Implement `app/routes/archive.py` and `archive.html` — list and download past digests with path-traversal protection.\n\n**Files:**\n- Modify: `app/routes/archive.py`\n- Create: `app/templates/archive.html`\n\n**Verify:** Manual — run print job, visit `/archive`, click Download.\n\n```json:metadata\n{\"files\": [\"app/routes/archive.py\",\"app/templates/archive.html\"], \"verifyCommand\": \"\", \"acceptanceCriteria\": [\"GET /archive lists PDFs newest-first\",\"download serves PDF file\",\"path traversal returns 404\",\"nonexistent file returns 404\"]}\n```"
+    },
+    {
+      "id": 17,
+      "subject": "Task 17: Dashboard, Settings & To-Do",
+      "status": "completed",
+      "blockedBy": [16],
+      "description": "**Goal:** Complete the web UI — full dashboard, settings with all sections, todo page + JS + API.\n\n**Files:**\n- Modify: `app/templates/index.html`, `app/templates/settings.html`\n- Create: `app/templates/todo.html`, `app/static/js/todo.js`\n- Modify: `app/routes/todo.py`\n\n**Verify:** Manual — visit each page, test all interactions.\n\n```json:metadata\n{\"files\": [\"app/templates/index.html\",\"app/templates/settings.html\",\"app/templates/todo.html\",\"app/static/js/todo.js\",\"app/routes/todo.py\"], \"verifyCommand\": \"\", \"acceptanceCriteria\": [\"dashboard shows next print time\",\"Print Now uses fetch and shows result\",\"settings saves and shows banner\",\"todo CRUD works\",\"todos persist across reloads\"]}\n```"
+    },
+    {
+      "id": 18,
+      "subject": "Task 18: End-to-End Polish & Docker Deploy",
+      "status": "completed",
+      "blockedBy": [17],
+      "description": "**Goal:** Run full test suite, complete end-to-end verification, create README and .env.example, tag v1.0.0.\n\n**Files:**\n- Create: `README.md`, `.env.example`\n\n**Verify:** `docker compose run --rm firstlight pytest tests/ -v` → all PASSED\n\n```json:metadata\n{\"files\": [\"README.md\",\".env.example\"], \"verifyCommand\": \"docker compose run --rm firstlight pytest tests/ -v\", \"acceptanceCriteria\": [\"all tests pass\",\"full wizard completes\",\"print creates archive\",\"preview renders PDF\",\"archive lists PDFs\",\"README documents setup\"]}\n```"
+    }
+  ],
+  "lastUpdated": "2026-04-27T02:00:00Z"
+}

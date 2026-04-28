@@ -16,3 +16,7 @@ config/
 
 *.log
 .pytest_cache/
+
+# Claude Code session data
+.claude/
+firstlight-claudecode-prompt.md
