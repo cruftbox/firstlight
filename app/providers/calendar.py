@@ -1,12 +1,13 @@
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 import logging
+import pytz
 
 TOKEN_PATH = Path("/app/config/google_token.json")
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
 
 
-def get_events(calendar_ids: list, day_offset: int = 0) -> list:
+def get_events(calendar_ids: list, day_offset: int = 0, timezone_str: str = "America/Los_Angeles") -> list:
     """Return list of {"time", "title", "all_day"} for today + day_offset. Returns [] on any failure."""
     creds = _get_credentials()
     if not creds:
@@ -19,8 +20,14 @@ def get_events(calendar_ids: list, day_offset: int = 0) -> list:
         logging.error("Calendar API build failed: %s", e)
         return []
 
-    day_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=day_offset)
-    day_end = day_start + timedelta(days=1)
+    try:
+        tz = pytz.timezone(timezone_str)
+    except Exception:
+        tz = pytz.utc
+    now_local = datetime.now(tz)
+    day_start_local = now_local.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=day_offset)
+    day_start = day_start_local.astimezone(timezone.utc)
+    day_end = (day_start_local + timedelta(days=1)).astimezone(timezone.utc)
     events = []
 
     for cal_id in calendar_ids:

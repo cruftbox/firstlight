@@ -27,8 +27,9 @@ def collect_data(config: dict) -> dict:
     calendar_tomorrow = []
     if config["calendar"]["enabled"]:
         try:
-            calendar_data = cal_provider.get_events(config["calendar"]["calendar_ids"])
-            calendar_tomorrow = cal_provider.get_events(config["calendar"]["calendar_ids"], day_offset=1)
+            tz_str = config["firstlight"]["timezone"]
+            calendar_data = cal_provider.get_events(config["calendar"]["calendar_ids"], timezone_str=tz_str)
+            calendar_tomorrow = cal_provider.get_events(config["calendar"]["calendar_ids"], day_offset=1, timezone_str=tz_str)
         except Exception as e:
             logging.warning("Calendar provider failed: %s", e)
 
