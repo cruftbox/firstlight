@@ -20,8 +20,8 @@
   <section class="weather-section">
     {% if weather %}
     <div class="weather-main">
-      ☀ {{ weather.temp }}°&nbsp;&nbsp;
       {{ config.location.city }}&nbsp;&nbsp;&nbsp;
+      Currently {{ weather.temp }}°&nbsp;&nbsp;&nbsp;
       High {{ weather.high }}° / Low {{ weather.low }}°&nbsp;&nbsp;&nbsp;
       {{ weather.condition }}
     </div>

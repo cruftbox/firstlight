@@ -33,7 +33,11 @@
       <input type="number" name="max_age_hours" class="form-control" value="{{ config.news.max_age_hours }}" min="1" max="168">
     </div>
   </div>
-  <button type="submit" class="btn btn-primary w-100">Continue →</button>
+  <div id="validateResult" class="mb-2"></div>
+  <div class="d-grid gap-2">
+    <button type="button" class="btn btn-outline-secondary" id="validateBtn">Validate feeds</button>
+    <button type="submit" class="btn btn-primary">Save &amp; Continue →</button>
+  </div>
 </form>
 <script>
 document.getElementById('addFeed').addEventListener('click', function() {
@@ -46,6 +50,41 @@ document.getElementById('feedsList').addEventListener('click', function(e) {
     const rows = document.querySelectorAll('.feed-row');
     if (rows.length > 1) e.target.closest('.feed-row').remove();
   }
+});
+
+document.getElementById('validateBtn').addEventListener('click', function() {
+  const btn = this;
+  const result = document.getElementById('validateResult');
+  const urls = Array.from(document.querySelectorAll('input[name="feed_url"]')).map(i => i.value.trim()).filter(Boolean);
+  if (!urls.length) {
+    result.innerHTML = '<div class="alert alert-warning py-1 small">No feed URLs entered.</div>';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Validating…';
+  result.innerHTML = '';
+  fetch('/setup/8/validate-feeds', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({urls}),
+  }).then(r => r.json()).then(d => {
+    const lines = d.results.map(r => {
+      if (r.ok) {
+        return '<div class="text-success small">✓ ' + r.title + ' (' + r.count + ' entries)</div>';
+      } else {
+        const div = document.createElement('div');
+        div.className = 'text-danger small';
+        div.textContent = '✗ ' + r.url + ': ' + (r.error || 'failed');
+        return div.outerHTML;
+      }
+    });
+    result.innerHTML = '<div class="border rounded p-2 mb-1">' + lines.join('') + '</div>';
+  }).catch(() => {
+    result.innerHTML = '<div class="alert alert-danger py-1 small">Validation request failed.</div>';
+  }).finally(() => {
+    btn.disabled = false;
+    btn.textContent = 'Validate feeds';
+  });
 });
 </script>
 {% endblock %}

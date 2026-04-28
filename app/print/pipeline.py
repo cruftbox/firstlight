@@ -31,7 +31,7 @@ def collect_data(config: dict) -> dict:
             logging.warning("Calendar provider failed: %s", e)
 
     try:
-        sports_data = sports.get_scores(config["sports"])
+        sports_data = sports.get_scores(config["sports"], config["firstlight"]["timezone"])
     except Exception as e:
         logging.warning("Sports provider failed: %s", e)
         sports_data = []

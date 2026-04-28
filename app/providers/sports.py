@@ -1,6 +1,7 @@
 import requests
 import logging
-from datetime import datetime
+import pytz
+from datetime import datetime, timezone
 
 ENDPOINTS = {
     "mlb": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard",
@@ -17,8 +18,12 @@ SPORT_EMOJIS = {
 }
 
 
-def get_scores(sports_config: dict) -> list:
+def get_scores(sports_config: dict, timezone_str: str = "America/Los_Angeles") -> list:
     """Returns list of {"emoji", "text"} for configured teams."""
+    try:
+        local_tz = pytz.timezone(timezone_str)
+    except Exception:
+        local_tz = pytz.utc
     results = []
     for league, teams in sports_config.items():
         if not teams:
@@ -60,8 +65,9 @@ def get_scores(sports_config: dict) -> list:
             else:
                 event_date = event.get("date", "")
                 if event_date:
-                    dt = datetime.fromisoformat(event_date.replace("Z", "+00:00"))
-                    time_str = dt.strftime("%I:%M %p UTC").lstrip("0") or "12:00 AM UTC"
+                    dt_utc = datetime.fromisoformat(event_date.replace("Z", "+00:00"))
+                    dt_local = dt_utc.astimezone(local_tz)
+                    time_str = dt_local.strftime("%I:%M %p").lstrip("0") or "12:00 AM"
                     text = f"{event['name']}  {time_str}"
                 else:
                     text = event.get("name", "")

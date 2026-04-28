@@ -3,8 +3,69 @@
 {% block progress_pct %}60{% endblock %}
 {% block step_title %}Google Calendar{% endblock %}
 {% block content %}
+
+{% if authorized %}
+<div class="alert alert-success">
+  Google Calendar authorized! Your calendars have been saved.
+</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-danger small">{{ error }}</div>
+{% endif %}
+
+{% if token_exist %}
+<div class="alert alert-success py-2 small">
+  <strong>✓ Authorized.</strong> Calendar is connected and ready.
+</div>
+<div class="d-grid gap-2">
+  <a href="/setup/6/authorize" class="btn btn-outline-secondary btn-sm">Re-authorize Google Calendar</a>
+  <a href="/setup/7" class="btn btn-primary">Continue →</a>
+  <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('credForm').classList.toggle('d-none')">Replace credentials.json</button>
+</div>
+<div id="credForm" class="d-none mt-3">
+  <form method="POST">
+    <div class="mb-3">
+      <label class="form-label fw-semibold">New credentials.json contents</label>
+      <textarea name="credentials_json" class="form-control font-monospace" rows="6"
+                placeholder='{"installed": {"client_id": "...", "client_secret": "...", ...}}'></textarea>
+    </div>
+    <button type="submit" class="btn btn-warning w-100">Replace credentials &amp; re-authorize</button>
+  </form>
+</div>
+
+{% elif creds_exist %}
+<div class="alert alert-info py-2 small">
+  <strong>Credentials saved.</strong> Now authorize Firstlight to access your Google Calendar.
+</div>
+<p class="small text-muted">
+  Before clicking Authorize, make sure <code>{{ request.host_url }}setup/6/callback</code>
+  is listed as an authorized redirect URI in your
+  <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>
+  OAuth client settings.
+</p>
+<div class="d-grid gap-2">
+  <a href="/setup/6/authorize" class="btn btn-primary">Authorize Google Calendar →</a>
+  <button type="submit" form="skipForm" name="action" value="skip" class="btn btn-outline-secondary">Skip</button>
+</div>
+<form id="skipForm" method="POST"></form>
+<hr class="my-3">
+<p class="text-muted small">Replace credentials.json:</p>
+<form method="POST">
+  <div class="mb-2">
+    <textarea name="credentials_json" class="form-control font-monospace" rows="4"
+              placeholder='{"installed": {...}}'></textarea>
+  </div>
+  <button type="submit" class="btn btn-outline-secondary btn-sm w-100">Save new credentials</button>
+</form>
+
+{% else %}
 <p class="text-muted">Paste your Google OAuth credentials JSON to enable calendar integration.</p>
-<p class="small text-muted">In <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> → APIs &amp; Services → Credentials → OAuth 2.0 Client IDs → Download JSON.</p>
+<p class="small text-muted">
+  In <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>
+  → APIs &amp; Services → Credentials → OAuth 2.0 Client IDs → Download JSON.
+  Then add <code>{{ request.host_url }}setup/6/callback</code> as an authorized redirect URI.
+</p>
 <form method="POST">
   <div class="mb-3">
     <label class="form-label fw-semibold">credentials.json contents</label>
@@ -12,8 +73,10 @@
               placeholder='{"installed": {"client_id": "...", "client_secret": "...", ...}}'></textarea>
   </div>
   <div class="d-grid gap-2">
-    <button type="submit" class="btn btn-primary">Save &amp; Continue →</button>
+    <button type="submit" class="btn btn-primary">Save credentials →</button>
     <button type="submit" name="action" value="skip" class="btn btn-outline-secondary">Skip</button>
   </div>
 </form>
+{% endif %}
+
 {% endblock %}

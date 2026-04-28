@@ -1,5 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from datetime import date
+import json
+import os
 import pytz
 from app.config import load as load_config, save as save_config
 
@@ -97,20 +99,102 @@ def step5():
 
 @setup_bp.route("/6", methods=["GET", "POST"])
 def step6():
+    from pathlib import Path
     cfg = load_config()
+    creds_path = Path("/app/config/google_credentials.json")
+    token_path = Path("/app/config/google_token.json")
+
+    error = request.args.get("error")
+    authorized = request.args.get("authorized") == "1"
+
     if request.method == "POST":
         if request.form.get("action") == "skip":
             return redirect(url_for("setup.step7"))
+
         creds_json = request.form.get("credentials_json", "").strip()
         if creds_json:
-            from pathlib import Path
-            creds_path = Path("/app/config/google_credentials.json")
+            try:
+                json.loads(creds_json)
+            except json.JSONDecodeError as exc:
+                return render_template(
+                    "setup/step6_calendar.html", config=cfg,
+                    creds_exist=creds_path.exists(), token_exist=token_path.exists(),
+                    error=f"Invalid JSON: {exc}",
+                )
             creds_path.parent.mkdir(parents=True, exist_ok=True)
             creds_path.write_text(creds_json, encoding="utf-8")
-            cfg["calendar"]["enabled"] = True
-            save_config(cfg)
-        return redirect(url_for("setup.step7"))
-    return render_template("setup/step6_calendar.html", config=cfg)
+            # Reset any existing token when credentials change
+            if token_path.exists():
+                token_path.unlink()
+        return redirect(url_for("setup.step6"))
+
+    return render_template(
+        "setup/step6_calendar.html", config=cfg,
+        creds_exist=creds_path.exists(), token_exist=token_path.exists(),
+        error=error, authorized=authorized,
+    )
+
+
+@setup_bp.route("/6/authorize")
+def calendar_authorize():
+    from pathlib import Path
+    from google_auth_oauthlib.flow import Flow
+
+    creds_path = Path("/app/config/google_credentials.json")
+    if not creds_path.exists():
+        return redirect(url_for("setup.step6") + "?error=Credentials+not+saved+yet")
+
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+    callback_url = url_for("setup.calendar_callback", _external=True)
+    flow = Flow.from_client_secrets_file(
+        str(creds_path),
+        scopes=["https://www.googleapis.com/auth/calendar.readonly"],
+        redirect_uri=callback_url,
+    )
+    auth_url, state = flow.authorization_url(access_type="offline", prompt="consent")
+    session["oauth_state"] = state
+    session["oauth_redirect_uri"] = callback_url
+    return redirect(auth_url)
+
+
+@setup_bp.route("/6/callback")
+def calendar_callback():
+    from pathlib import Path
+    from google_auth_oauthlib.flow import Flow
+
+    creds_path = Path("/app/config/google_credentials.json")
+    token_path = Path("/app/config/google_token.json")
+
+    if not creds_path.exists():
+        return redirect(url_for("setup.step6") + "?error=Credentials+not+found")
+
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+    redirect_uri = session.get("oauth_redirect_uri") or url_for("setup.calendar_callback", _external=True)
+    flow = Flow.from_client_secrets_file(
+        str(creds_path),
+        scopes=["https://www.googleapis.com/auth/calendar.readonly"],
+        redirect_uri=redirect_uri,
+        state=session.get("oauth_state"),
+    )
+
+    try:
+        flow.fetch_token(authorization_response=request.url)
+        creds = flow.credentials
+        token_path.write_text(creds.to_json(), encoding="utf-8")
+
+        from googleapiclient.discovery import build
+        service = build("calendar", "v3", credentials=creds)
+        cal_list = service.calendarList().list().execute()
+        cal_ids = [c["id"] for c in cal_list.get("items", [])]
+
+        cfg = load_config()
+        cfg["calendar"]["enabled"] = True
+        cfg["calendar"]["calendar_ids"] = cal_ids
+        save_config(cfg)
+    except Exception as exc:
+        return redirect(url_for("setup.step6") + f"?error={str(exc)[:120]}")
+
+    return redirect(url_for("setup.step6") + "?authorized=1")
 
 
 @setup_bp.route("/7", methods=["GET", "POST"])
@@ -141,6 +225,30 @@ def step8():
         save_config(cfg)
         return redirect(url_for("setup.step9"))
     return render_template("setup/step8_news.html", config=cfg)
+
+
+@setup_bp.route("/8/validate-feeds", methods=["POST"])
+def validate_feeds():
+    import feedparser
+    data = request.get_json(silent=True) or {}
+    urls = data.get("urls", [])
+    results = []
+    for url in urls:
+        url = url.strip()
+        if not url:
+            continue
+        try:
+            feed = feedparser.parse(url)
+            if getattr(feed, "bozo", False) and not getattr(feed, "entries", []):
+                exc = getattr(feed, "bozo_exception", None)
+                results.append({"url": url, "ok": False, "error": str(exc) if exc else "parse error"})
+            else:
+                feed_title = getattr(getattr(feed, "feed", None), "title", None) or url
+                count = len(getattr(feed, "entries", []))
+                results.append({"url": url, "ok": True, "title": feed_title, "count": count})
+        except Exception as exc:
+            results.append({"url": url, "ok": False, "error": str(exc)})
+    return jsonify({"results": results})
 
 
 @setup_bp.route("/9", methods=["GET", "POST"])
