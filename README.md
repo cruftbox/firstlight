@@ -12,19 +12,64 @@ The documentation includes notes for QNAP NAS deployment, which is what the auth
 
 The same applies if you want to extend Firstlight. The codebase is intentionally straightforward, and adding a new data source, changing the layout, or wiring up a service that isn't built in yet is the kind of task an LLM coding assistant handles well. If you have an idea for a feature, it's likely within reach.
 
-## Quick Start
+## Getting Started
 
-**Requirements:** Docker Desktop (Windows/Mac) or Docker Engine (Linux).
+### 1. Prerequisites
+
+- **Docker** — [Docker Desktop](https://www.docker.com/products/docker-desktop/) on Windows or Mac; Docker Engine on Linux or a NAS.
+- **Git** — to clone the repository.
+- A machine that stays on overnight, such as a home server or NAS.
+
+### 2. Clone and configure
 
 ```bash
-git clone <repo-url> firstlight
+git clone https://github.com/cruftbox/firstlight.git firstlight
 cd firstlight
 cp .env.example .env
-# Edit .env to set a strong SECRET_KEY
+```
+
+Open `.env` and replace `changeme-replace-with-a-long-random-string` with any long random string. This is used to secure browser sessions — it doesn't need to be memorable, just unique.
+
+### 3. Build and start
+
+```bash
 docker compose up --build
 ```
 
-Open http://localhost:5000 and complete the 10-step setup wizard.
+The first build downloads the base image and installs dependencies — expect **3–5 minutes**. You'll see log output as it progresses. When you see a line like:
+
+```
+firstlight  | * Running on http://0.0.0.0:5000
+```
+
+Firstlight is running.
+
+### 4. Complete the setup wizard
+
+Open **http://localhost:5000** in your browser (or replace `localhost` with your server's IP address if running on a NAS or remote machine).
+
+You'll be redirected to the setup wizard automatically. It covers:
+
+| Step | What you configure |
+|------|--------------------|
+| 1 | Paper size |
+| 2 | Location (for weather) |
+| 3 | Print time and timezone |
+| 4 | Network printer IP |
+| 5 | Optional content — quote, history, AQI, to-do source |
+| 6 | Google Calendar (optional — skip if not needed) |
+| 7 | Sports teams |
+| 8 | News RSS feeds |
+| 9 | Email delivery (optional) |
+| 10 | Review and finish |
+
+Most steps take under a minute. Calendar setup requires a Google Cloud project — see [Google Calendar Setup](#google-calendar-setup) below if you want to enable it.
+
+### 5. Verify it works
+
+Once the wizard completes you'll land on the home page. Click **Preview PDF** to see what the digest looks like, or **Print Now** to send it to your printer immediately.
+
+From this point Firstlight will print automatically every morning at the time you configured. All settings can be changed later at any time from the Settings page.
 
 ## Features
 
