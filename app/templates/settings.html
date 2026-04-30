@@ -181,6 +181,22 @@
   <a href="/" class="btn btn-outline-secondary ms-2">Cancel</a>
 
 </form>
+
+<div class="card mt-4 mb-4">
+  <div class="card-header fw-bold">Setup Wizard</div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">Some settings are only configurable through the setup wizard. Click any step below to go directly to it.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/setup/2" class="btn btn-outline-secondary btn-sm">&#127759; Location</a>
+      <a href="/setup/5" class="btn btn-outline-secondary btn-sm">&#128197; Daily Content</a>
+      <a href="/setup/6" class="btn btn-outline-secondary btn-sm">&#128197; Calendar</a>
+      <a href="/setup/7" class="btn btn-outline-secondary btn-sm">&#127942; Sports</a>
+      <a href="/setup/8" class="btn btn-outline-secondary btn-sm">&#128240; News Feeds</a>
+      <a href="/setup/9" class="btn btn-outline-secondary btn-sm">&#9993; Email</a>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/time-scroll.js') }}"></script>
