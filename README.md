@@ -200,7 +200,17 @@ Calendar integration remains optional — skip step 6 in the wizard if you don't
 
 ## Configuration
 
-All configuration lives in `config/firstlight.yaml`, volume-mounted into the container so it survives rebuilds. The setup wizard writes this file — you rarely need to touch it directly. When you do, here's how to find what you need.
+### The wizard is the primary way to configure Firstlight
+
+The setup wizard walks you through every configurable option the first time you run the app. You don't need to edit any files manually to get up and running — just answer the wizard's prompts and it writes the configuration for you.
+
+**After initial setup, you can return to any wizard step at any time.** From the Settings page, scroll to the bottom and find the **Setup Wizard** section. Each step is linked directly — go back to Sports to change your teams, News to update your feeds, Calendar to re-authorize, and so on. Changes take effect immediately without restarting the container.
+
+The Settings page itself also covers the most common adjustments — print time, timezone, paper size, printer IP, optional content toggles, to-do source, archive, and email — without going back into the wizard.
+
+### Editing the config file directly
+
+All configuration is stored in `config/firstlight.yaml`, volume-mounted into the container so it survives rebuilds. The wizard writes and maintains this file. You rarely need to edit it by hand, but it is plain YAML and easy to read if you need to inspect a value, reset something, or make a change not exposed in the UI.
 
 > **Security:** `config/` may contain SMTP credentials and Google OAuth tokens. Restrict permissions on the host: `chmod 700 config/`
 
