@@ -38,6 +38,19 @@ Open http://localhost:5000 and complete the 10-step setup wizard.
 - **Email delivery** (SMTP; supports Gmail App Passwords)
 - **Network printer** via CUPS inside the container — enter your printer's IP in the wizard, no drivers needed
 
+## Google Calendar Setup
+
+Calendar integration is optional. To enable it you need a Google Cloud project with the Calendar API enabled and an OAuth client configured as a **Web application** (not Desktop — the redirect callback requires it).
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) and create or select a project.
+2. **Enable the API:** APIs & Services → Library → search "Google Calendar API" → Enable.
+3. **Configure consent screen:** APIs & Services → OAuth consent screen → External → add your Google account as a test user.
+4. **Create credentials:** APIs & Services → Credentials → Create Credentials → OAuth client ID → **Web application**.
+5. **Add redirect URI:** under "Authorized redirect URIs" add `http://<your-server-address>/setup/6/callback` — for example `http://192.168.4.27:8088/setup/6/callback`.
+6. Download the JSON file and paste its contents into the setup wizard at step 6.
+
+Google will prompt you to authorize access, then redirect back to the wizard automatically. Calendar integration remains optional — skip step 6 if you don't need it.
+
 ## Configuration
 
 All config is stored in `config/firstlight.yaml` (Docker volume). The `config/` directory

@@ -63,11 +63,14 @@
 
 {% else %}
 <p class="text-muted">Paste your Google OAuth credentials JSON to enable calendar integration.</p>
-<p class="small text-muted">
-  In <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>
-  → Google Auth Platform → Clients → your OAuth client → Download JSON (or copy the contents).
-  Use a <strong>Desktop app</strong> client type — no redirect URI registration needed.
-</p>
+<ol class="small text-muted ps-3">
+  <li class="mb-1">Open <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> and create or select a project.</li>
+  <li class="mb-1"><strong>Enable the Calendar API:</strong> APIs &amp; Services → Library → search "Google Calendar API" → Enable.</li>
+  <li class="mb-1"><strong>Configure consent screen:</strong> APIs &amp; Services → OAuth consent screen → External → add your Google account as a test user.</li>
+  <li class="mb-1"><strong>Create credentials:</strong> APIs &amp; Services → Credentials → Create Credentials → OAuth client ID → choose <strong>Web application</strong>.</li>
+  <li class="mb-1"><strong>Add redirect URI:</strong> under "Authorized redirect URIs" add <code>http://&lt;your-server-address&gt;/setup/6/callback</code> (e.g. <code>http://192.168.4.27:8088/setup/6/callback</code>).</li>
+  <li>Download the JSON and paste its contents below.</li>
+</ol>
 <form method="POST">
   <div class="mb-3">
     <label class="form-label fw-semibold">credentials.json contents</label>
