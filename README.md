@@ -461,7 +461,7 @@ docker compose run --rm firstlight pytest tests/ -v
 docker compose up --build   # reload after code changes
 ```
 
-The `docs/superpowers/` directory contains implementation plans and design specs generated during development using the Superpowers plugin for Claude Code. They are developer artifacts, not end-user documentation — useful context if you want to understand the original design decisions or extend the project with AI assistance.
+The `docs/superpowers/` directory contains implementation plans and design specs generated during development using the [Superpowers](https://github.com/obra/superpowers) plugin for Claude Code. They are developer artifacts, not end-user documentation — useful context if you want to understand the original design decisions or extend the project with AI assistance.
 
 ## License
 
