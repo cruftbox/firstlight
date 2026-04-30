@@ -105,18 +105,62 @@ From this point Firstlight will print automatically every morning at the time yo
 - **Email delivery** (SMTP; supports Gmail App Passwords)
 - **Network printer** via CUPS inside the container — enter your printer's IP in the wizard, no drivers needed
 
+## Credentials and API Keys
+
+Firstlight is deliberately light on credentials. Most data sources require no account or API key.
+
+| Source | Credential required | Where to get it | Free tier |
+|--------|--------------------|--------------------|-----------|
+| **Weather** (Open-Meteo) | None | — | Always free |
+| **Sports** (ESPN) | None | — | Always free (undocumented public API) |
+| **News** (RSS feeds) | None | — | Always free |
+| **Quote of the day** (ZenQuotes) | None | — | Always free |
+| **On this day** (Wikipedia) | None | — | Always free |
+| **Google Calendar** | OAuth credentials JSON | [Google Cloud Console](https://console.cloud.google.com/) | Free — personal use is well within the no-cost tier |
+| **Email delivery** | SMTP host, username, password | Your email provider (Gmail, Fastmail, etc.) | Depends on provider — Gmail App Passwords are free |
+| **External task API** *(optional)* | API key / bearer token | Your chosen service | Depends on service |
+| **SECRET_KEY** | Self-generated string | Generate locally — see `.env.example` | Free |
+
+The only step that requires external account setup is Google Calendar, and that step is entirely optional. If you skip it, everything else still works.
+
+### Generating SECRET_KEY
+
+SECRET_KEY is a random string used to sign Flask session cookies. It never leaves your server. Generate one with:
+
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Paste the output into your `.env` file. Any long random string works — it just needs to be consistent across container restarts.
+
 ## Google Calendar Setup
 
-Calendar integration is optional. To enable it you need a Google Cloud project with the Calendar API enabled and an OAuth client configured as a **Web application** (not Desktop — the redirect callback requires it).
+Calendar integration is optional. This section explains what type of Google credentials to use and walks through the setup.
+
+### Service Account vs OAuth Client ID
+
+Google offers two ways to authenticate an app:
+
+**Service Account** — a robot identity that acts on its own behalf. It has its own email address, and by default has no access to your personal calendars. To use it, you'd have to manually share each calendar with the service account email. More complex, and designed for server-to-server workflows, not personal access.
+
+**OAuth Client ID** — authenticates as *you* with your consent. This is what Firstlight uses. You authorize it once in a browser, and Firstlight stores a refresh token locally. After that, it operates silently — the token refreshes automatically, and you never need to re-authorize unless you revoke access or replace the credentials file.
+
+For a personal tool accessing your own calendar, **OAuth Client ID is the right choice**. Do not use a Service Account.
+
+### Setup walkthrough
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) and create or select a project.
-2. **Enable the API:** APIs & Services → Library → search "Google Calendar API" → Enable.
-3. **Configure consent screen:** APIs & Services → OAuth consent screen → External → add your Google account as a test user.
-4. **Create credentials:** APIs & Services → Credentials → Create Credentials → OAuth client ID → **Web application**.
-5. **Add redirect URI:** under "Authorized redirect URIs" add `http://<your-server-address>/setup/6/callback` — for example `http://192.168.4.27:8088/setup/6/callback`.
-6. Download the JSON file and paste its contents into the setup wizard at step 6.
+2. **Enable the Calendar API:** APIs & Services → Library → search "Google Calendar API" → Enable.
+3. **Configure the consent screen:** APIs & Services → OAuth consent screen → choose **External** → fill in an app name (anything) → add your Google account email as a **test user** → save.
+4. **Create credentials:** APIs & Services → Credentials → Create Credentials → OAuth client ID → application type: **Web application**.
+5. **Add the redirect URI:** under "Authorized redirect URIs", add `http://<your-server-address>/setup/6/callback`. For example: `http://192.168.4.27:8088/setup/6/callback`. This must match exactly — wrong port or IP and the authorization will fail.
+6. Click **Download JSON** and copy its contents into the setup wizard at step 6.
 
-Google will prompt you to authorize access, then redirect back to the wizard automatically. Calendar integration remains optional — skip step 6 if you don't need it.
+Google will open a consent screen in your browser. Sign in, grant calendar read access, and you'll be redirected back to the wizard automatically.
+
+**After authorization:** Firstlight stores the refresh token in `config/google_token.json`. The token renews itself silently each day. You won't need to re-authorize unless you change the credentials file or revoke access via your Google account settings.
+
+Calendar integration remains optional — skip step 6 in the wizard if you don't need it.
 
 ## Configuration
 
