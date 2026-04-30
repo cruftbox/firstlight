@@ -1,7 +1,8 @@
 # Firstlight
 
-Self-hosted daily digest — weather, calendar, sports, news, and to-dos rendered as a
-print-ready PDF and delivered to your printer and/or email each morning.
+Firstlight is a self-hosted daily digest application that delivers a personalized, print-ready morning briefing straight to your printer. Each day it pulls together local weather with hourly forecasts and air quality, your Google Calendar events, sports scores from your favorite teams across MLB, NFL, NBA, WNBA, MLS, and the Premier League, curated news headlines from RSS feeds you choose, and a to-do list you manage yourself — all rendered into a clean, single-page PDF that prints automatically at whatever time you set. A quote of the day and an "on this day in history" entry round out the digest with a touch of personality.
+
+Firstlight runs 24/7 in Docker on any always-on home server or NAS, with a first-run setup wizard that walks you through configuration in minutes. It requires no subscriptions, no cloud accounts, and no ongoing costs — weather data comes from Open-Meteo, sports from ESPN, and news from standard RSS feeds, all free and open. A built-in web interface lets you preview the digest on demand, manage your to-do list, browse a personal archive of past digests, and trigger a print from any device on your home network. Firstlight is designed to be simple to deploy, easy to maintain, and genuinely useful every single morning.
 
 ## Quick Start
 
@@ -24,7 +25,7 @@ Open http://localhost:5000 and complete the 10-step setup wizard.
 - **Google Calendar** integration (optional — paste OAuth credentials in wizard)
 - **Sports scores** via ESPN API (MLB, NFL, NBA, WNBA, MLS, Premier League)
 - **RSS news feeds** with age filtering
-- **To-do list** with persistent JSON storage
+- **To-do list** — built-in web UI, plain text file (e.g. Syncthing), or external REST API
 - **PDF archive** with configurable retention (default 30 days)
 - **Email delivery** (SMTP; supports Gmail App Passwords)
 - **CUPS printer** integration via `lpr`
