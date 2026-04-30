@@ -66,6 +66,28 @@
              value="{{ config.tasks.file_path }}" placeholder="/tasks/tasks.txt">
       <div class="form-text">Mount the host folder in <code>docker-compose.yml</code> as a read-only volume.</div>
     </div>
+    <div class="form-check mt-2">
+      <input class="form-check-input" type="radio" name="tasks_source" id="sourceApi"
+             value="api" {% if config.tasks.source == 'api' %}checked{% endif %}>
+      <label class="form-check-label" for="sourceApi">External API <span class="text-muted small">(REST service with JSON response)</span></label>
+    </div>
+    <div id="apiFieldsRow" class="mt-2 ms-4" {% if config.tasks.source != 'api' %}style="display:none"{% endif %}>
+      <div class="mb-2">
+        <label class="form-label small mb-1">API URL</label>
+        <input type="text" name="tasks_api_url" class="form-control form-control-sm"
+               value="{{ config.tasks.api_url }}" placeholder="https://api.example.com/tasks">
+      </div>
+      <div class="mb-2">
+        <label class="form-label small mb-1">API key / bearer token</label>
+        <input type="password" name="tasks_api_key" class="form-control form-control-sm"
+               placeholder="Leave blank to keep current">
+      </div>
+      <div>
+        <label class="form-label small mb-1">Filter <span class="text-muted">(project, label, or tag — optional)</span></label>
+        <input type="text" name="tasks_api_filter" class="form-control form-control-sm"
+               value="{{ config.tasks.api_filter }}" placeholder="e.g. Inbox">
+      </div>
+    </div>
   </div>
 
   <button type="submit" class="btn btn-primary w-100">Continue →</button>
@@ -75,8 +97,8 @@
 <script>
   document.querySelectorAll('input[name="tasks_source"]').forEach(function(radio) {
     radio.addEventListener('change', function() {
-      document.getElementById('filePathRow').style.display =
-        this.value === 'file' ? '' : 'none';
+      document.getElementById('filePathRow').style.display = this.value === 'file' ? '' : 'none';
+      document.getElementById('apiFieldsRow').style.display = this.value === 'api' ? '' : 'none';
     });
   });
 </script>

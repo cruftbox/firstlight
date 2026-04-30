@@ -69,11 +69,18 @@ def collect_data(config: dict) -> dict:
 
 
 def _load_todos(config: dict = None) -> list:
-    source = (config or {}).get("tasks", {}).get("source", "builtin")
+    tasks_cfg = (config or {}).get("tasks", {})
+    source = tasks_cfg.get("source", "builtin")
     if source == "file":
         from app.providers.tasks import get_tasks
-        file_path = (config or {}).get("tasks", {}).get("file_path", "/tasks/tasks.txt")
-        return get_tasks(file_path)
+        return get_tasks(tasks_cfg.get("file_path", "/tasks/tasks.txt"))
+    if source == "api":
+        from app.providers.tasks_api import get_tasks as get_api_tasks
+        return get_api_tasks(
+            tasks_cfg.get("api_url", ""),
+            tasks_cfg.get("api_key", ""),
+            tasks_cfg.get("api_filter", ""),
+        )
     todos_path = Path("/app/config/todos.json")
     if not todos_path.exists():
         return []

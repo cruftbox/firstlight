@@ -65,6 +65,11 @@ def settings():
         tasks_file_path = request.form.get("tasks_file_path", "").strip()
         if tasks_file_path:
             cfg["tasks"]["file_path"] = tasks_file_path
+        cfg["tasks"]["api_url"] = request.form.get("tasks_api_url", "").strip()
+        tasks_api_key = request.form.get("tasks_api_key", "").strip()
+        if tasks_api_key:
+            cfg["tasks"]["api_key"] = tasks_api_key
+        cfg["tasks"]["api_filter"] = request.form.get("tasks_api_filter", "").strip()
         cfg["archive"]["enabled"] = request.form.get("archive_enabled") == "on"
         cfg["archive"]["retention_days"] = int(request.form.get("retention_days", 30))
         cfg["email"]["enabled"] = request.form.get("email_enabled") == "on"

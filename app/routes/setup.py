@@ -105,6 +105,11 @@ def step5():
         file_path = request.form.get("tasks_file_path", "").strip()
         if file_path:
             cfg["tasks"]["file_path"] = file_path
+        cfg["tasks"]["api_url"] = request.form.get("tasks_api_url", "").strip()
+        api_key = request.form.get("tasks_api_key", "").strip()
+        if api_key:
+            cfg["tasks"]["api_key"] = api_key
+        cfg["tasks"]["api_filter"] = request.form.get("tasks_api_filter", "").strip()
         save_config(cfg)
         return redirect(url_for("setup.step6"))
     preview_quote = None
