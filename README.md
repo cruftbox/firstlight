@@ -4,6 +4,14 @@ Firstlight is a self-hosted daily digest application that delivers a personalize
 
 Firstlight runs 24/7 in Docker on any always-on home server or NAS, with a first-run setup wizard that walks you through configuration in minutes. It requires no subscriptions, no cloud accounts, and no ongoing costs — weather data comes from Open-Meteo, sports from ESPN, and news from standard RSS feeds, all free and open. A built-in web interface lets you preview the digest on demand, manage your to-do list, browse a personal archive of past digests, and trigger a print from any device on your home network. Firstlight is designed to be simple to deploy, easy to maintain, and genuinely useful every single morning.
 
+## Before You Begin
+
+Installation requires basic comfort with the command line — cloning a repository, editing a configuration file, and running Docker commands. You don't need to be a developer, but you should be at ease in a terminal.
+
+Server environments vary enough that the setup process sometimes needs a small adjustment from the defaults documented here. Using an LLM coding assistant (Claude, ChatGPT, or similar) during installation is genuinely recommended — it can diagnose errors specific to your environment, explain what each step does, and suggest fixes without requiring you to search through documentation.
+
+The same applies if you want to extend Firstlight. The codebase is intentionally straightforward, and adding a new data source, changing the layout, or wiring up a service that isn't built in yet is the kind of task an LLM coding assistant handles well. If you have an idea for a feature, it's likely within reach.
+
 ## Quick Start
 
 **Requirements:** Docker Desktop (Windows/Mac) or Docker Engine (Linux).
