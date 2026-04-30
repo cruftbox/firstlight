@@ -1,6 +1,8 @@
 # Firstlight
 
-Firstlight is a self-hosted daily digest application that delivers a personalized, print-ready morning briefing straight to your printer. Each day it pulls together local weather with hourly forecasts and air quality, your Google Calendar events, sports scores from your favorite teams across MLB, NFL, NBA, NHL, WNBA, NWSL, MLS, and the Premier League, curated news headlines from RSS feeds you choose, and a to-do list you manage yourself — all rendered into a clean, single-page PDF that prints automatically at whatever time you set. A quote of the day and an "on this day in history" entry round out the digest with a touch of personality.
+**Firstlight replaces morning phone scrolling with a single, intentional, printed page of information you actually care about.**
+
+Each day it pulls together local weather with hourly forecasts and air quality, your Google Calendar events, sports scores from your favorite teams across MLB, NFL, NBA, NHL, WNBA, NWSL, MLS, and the Premier League, curated news headlines from RSS feeds you choose, and a to-do list you manage yourself — all rendered into a clean, single-page PDF that prints automatically at whatever time you set. A quote of the day and an "on this day in history" entry round out the digest with a touch of personality.
 
 Firstlight runs 24/7 in Docker on any always-on home server or NAS, with a first-run setup wizard that walks you through configuration in minutes. Most data sources are free and require no account — weather from Open-Meteo, sports from ESPN, and news from standard RSS feeds. Google Calendar is the one optional integration that requires a Google Cloud account. A built-in web interface lets you preview the digest on demand, manage your to-do list, browse a personal archive of past digests, and trigger a print from any device on your home network. Firstlight is designed to be simple to deploy, easy to maintain, and genuinely useful every single morning.
 
@@ -16,13 +18,28 @@ This probably resonates most with people who've reached a point in life where th
 
 ## Before You Begin
 
-Installation requires basic comfort with the command line — cloning a repository, editing a configuration file, and running Docker commands. You don't need to be a developer, but you should be at ease in a terminal.
+**This project assumes basic familiarity with the command line, Docker, and editing plain text config files.** You don't need to be a developer, but you should be comfortable running commands in a terminal and not alarmed by a YAML file. If something in the setup process breaks, the Troubleshooting section and a log file will usually tell you what went wrong.
 
-The documentation includes notes for QNAP NAS deployment, which is what the author runs, but Firstlight will work on any always-on server or NAS that supports Docker. Your environment will likely differ in small ways. Server environments vary enough that the setup process sometimes needs a small adjustment from the defaults documented here. Using an LLM coding assistant (Claude, ChatGPT, or similar) during installation is genuinely recommended — it can diagnose errors specific to your environment, explain what each step does, and suggest fixes without requiring you to search through documentation.
+Using an LLM coding assistant (Claude, ChatGPT, or similar) during installation is genuinely recommended — server environments vary enough that commands sometimes need small adjustments, and an LLM can diagnose errors and explain what's happening without requiring you to search through documentation. The same applies if you want to customize or extend the project.
 
-The same applies if you want to extend Firstlight. The codebase is intentionally straightforward, and adding a new data source, changing the layout, or wiring up a service that isn't built in yet is the kind of task an LLM coding assistant handles well. If you have an idea for a feature, it's likely within reach.
+The documentation includes QNAP NAS deployment notes because that's what the author runs, but Firstlight works on any always-on server or NAS that supports Docker. Expect minor differences for your environment.
 
 ## Prerequisites
+
+**Before you start, make sure you have:**
+
+- [ ] A server or NAS that stays on — Docker must keep running overnight
+- [ ] Docker Engine 20.10+ (with `docker compose` v2) or Docker Desktop
+- [ ] Git installed on your development machine
+- [ ] The server's LAN IP address (check your router — a static/reserved IP is recommended)
+- [ ] Your network printer's IP address (optional — you can skip printing during setup)
+- [ ] A Google account, if you want Calendar integration (optional)
+- [ ] ~1 GB free disk space on the server
+
+**What you do NOT need:**
+
+- API keys for weather, sports, news, or quotes — all free with no signup
+- Python installed locally — everything runs inside Docker
 
 | Requirement | Notes |
 |-------------|-------|
