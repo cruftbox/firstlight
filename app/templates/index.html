@@ -24,7 +24,9 @@
       <div class="card-body">
         <h5 class="card-title">Quick Links</h5>
         <ul class="list-unstyled mb-0">
+          {% if config.tasks.source != 'file' %}
           <li class="mb-1"><a href="/todo">&#9999; To-Do list</a></li>
+          {% endif %}
           <li class="mb-1"><a href="/archive">&#128193; View past digests &rarr;</a></li>
           <li><a href="/settings">&#9881; Settings</a></li>
         </ul>

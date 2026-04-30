@@ -12,7 +12,8 @@ def index():
     job = scheduler.get_job("daily_digest")
     if job and job.next_run_time:
         next_run = job.next_run_time.strftime("%I:%M %p").lstrip("0") or "12:00 AM"
-    return render_template("index.html", next_run=next_run)
+    cfg = load_config()
+    return render_template("index.html", next_run=next_run, config=cfg)
 
 
 @main_bp.route("/preview")
