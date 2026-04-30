@@ -6,6 +6,14 @@ Firstlight runs 24/7 in Docker on any always-on home server or NAS, with a first
 
 ![Firstlight example digest](docs/firstlight-example-page.png)
 
+## Motivation
+
+Firstlight started as a personal project to reclaim the morning. The habit of reaching for a phone first thing — scrolling through news, notifications, and feeds designed to capture attention — felt like a bad way to start the day. A printed page doesn't notify you. It doesn't update. It doesn't pull you somewhere else. It just sits there with exactly the information you chose, ready when you are.
+
+The digest is designed to be read over coffee in a few minutes: the weather, what's on the calendar, scores from last night, a handful of news headlines you actually want, and a short to-do list for the day. Everything useful, nothing extra. Once it's printed, the day can start on your terms.
+
+This probably resonates most with people who've reached a point in life where they're actively trying to reduce screen time — not out of discipline, but because they've simply stopped finding the scroll rewarding. If that sounds familiar, Firstlight might be worth trying.
+
 ## Prerequisites
 
 | Requirement | Notes |
@@ -115,11 +123,108 @@ Google will prompt you to authorize access, then redirect back to the wizard aut
 All config is stored in `config/firstlight.yaml` (Docker volume). The `config/` directory
 contains SMTP credentials — restrict its filesystem permissions on the host.
 
+## Scheduling
+
+Firstlight uses an internal scheduler ([APScheduler](https://apscheduler.readthedocs.io/)) running as a background thread inside the container. **No external cron job is needed.** The container handles its own timing.
+
+The print time you set in the wizard is stored in `config/firstlight.yaml` and fires once daily at that time in your configured timezone. It starts automatically whenever the container starts, and updates immediately when you change the print time in Settings — no restart required.
+
+If you want to trigger a print outside the scheduled time, use the **Print Now** button in the web interface, or send a POST request directly:
+
+```bash
+curl -X POST http://<your-server>:8088/print
+```
+
+If the container restarts (after a reboot, for example), the scheduler resumes automatically. On a NAS with `restart: unless-stopped` in `docker-compose.yml`, Firstlight starts on boot without any additional configuration.
+
 ## Deployment (QNAP NAS)
 
 1. Copy the repo to your NAS.
 2. Create `config/` with restricted permissions: `chmod 700 config/`
 3. `docker compose up -d --build`
+
+## Customizing and Adding Sections
+
+### How the pieces fit together
+
+Every section of the digest follows the same pattern:
+
+1. **Provider** (`app/providers/`) — a Python module that fetches or reads data and returns a plain Python list or dict.
+2. **Pipeline** (`app/print/pipeline.py`) — calls each provider and collects the results into a single `data` dict passed to the template.
+3. **Template** (`app/templates/digest.html`) — a Jinja2 HTML template that renders the `data` dict into page sections.
+4. **Styles** (`app/static/css/digest.css`) — CSS that controls the printed layout, fonts, and spacing. WeasyPrint converts the rendered HTML + CSS to PDF.
+
+To add a new section, you need to touch all four: write a provider, register it in the pipeline, add a block to the template, and add styles to the CSS.
+
+### Changing sports teams
+
+No code needed — go to **Settings → Setup Wizard → Sports** and update the team names for each league. The ESPN API does the rest.
+
+### Adding a new data section
+
+Here's the minimal pattern using a hypothetical "word of the day" section as an example:
+
+**1. Create the provider** (`app/providers/wordofday.py`):
+```python
+import requests
+
+def get_word():
+    try:
+        r = requests.get("https://api.example.com/word-of-day", timeout=5)
+        r.raise_for_status()
+        return r.json()  # e.g. {"word": "ephemeral", "definition": "..."}
+    except Exception:
+        return None
+```
+
+**2. Register it in the pipeline** (`app/print/pipeline.py`), inside `collect_data()`:
+```python
+from app.providers import wordofday
+word_data = None
+try:
+    word_data = wordofday.get_word()
+except Exception as e:
+    logging.warning("Word of day failed: %s", e)
+# add to the return dict:
+"word": word_data,
+```
+
+**3. Add it to the template** (`app/templates/digest.html`):
+```html
+{% if word %}
+<section class="word-section">
+  <h2>Word of the Day</h2>
+  <strong>{{ word.word }}</strong> — {{ word.definition }}
+</section>
+{% endif %}
+```
+
+**4. Style it** (`app/static/css/digest.css`):
+```css
+.word-section {
+  margin-bottom: 12px;
+  font-size: 10.5pt;
+}
+```
+
+### Adjusting fonts and paper size
+
+Paper size is selected in the setup wizard and applied automatically via the `body.a4` CSS class. To adjust font sizes — useful for larger text on thermal printers or tighter spacing on A4 — edit `app/static/css/digest.css`:
+
+```css
+/* Base font size — increase for thermal/large-print, decrease to fit more content */
+body.digest {
+  font-size: 11pt;   /* try 12–14pt for thermal printers */
+  line-height: 1.45;
+}
+
+/* Individual sections can be tuned independently */
+.news-item  { font-size: 9.5pt; }  /* news is already compact */
+.score-item { font-size: 10.5pt; }
+.todo-item  { font-size: 10.5pt; }
+```
+
+After any code change, rebuild the container with `sudo docker compose build && sudo docker compose up -d` (or `sudo /share/firstlight/update.sh` on QNAP).
 
 ## Development
 
