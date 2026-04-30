@@ -353,6 +353,70 @@ body.digest {
 
 After any code change, rebuild the container with `sudo docker compose build && sudo docker compose up -d` (or `sudo /share/firstlight/update.sh` on QNAP).
 
+## Troubleshooting
+
+Failures in a self-hosted tool are normal. Here's how to diagnose the most common ones.
+
+### Container won't start
+
+**Symptom:** `docker compose up` exits immediately or loops.
+
+- Run `docker compose logs firstlight` to see the error.
+- Check that port 5000 (or your mapped port) isn't already in use: `lsof -i :5000` on Linux/Mac.
+- Make sure `.env` exists and `SECRET_KEY` is set. A missing or blank key causes Flask to refuse to start.
+
+### Web interface unreachable
+
+**Symptom:** Browser shows "connection refused" or times out.
+
+- Confirm the container is running: `docker ps | grep firstlight`
+- If running on a remote server, use the server's IP address — not `localhost`.
+- Check your firewall allows the port. On QNAP, confirm the port mapping in the Container Manager or `docker-compose.yml`.
+
+### PDF is blank or missing sections
+
+**Symptom:** Digest prints or previews but one or more sections are empty.
+
+- Each section only renders if its data provider returned something. Open the container logs during a print run (`docker compose logs -f firstlight`) and look for `WARNING` lines — each provider logs a warning when it fails.
+- **Weather missing:** check that your location lat/lon is set (Settings → Setup Wizard → Location).
+- **Sports missing:** confirm your team abbreviations match ESPN's — e.g. `LAD` not `Dodgers`. Check via Settings → Setup Wizard → Sports.
+- **Calendar missing:** the Google token may have expired or been revoked. Re-authorize via Settings → Setup Wizard → Calendar.
+- **News missing:** one or more RSS feeds may be unreachable or returning invalid data. Validate feed URLs via Settings → Setup Wizard → News Feeds.
+
+### Digest not printing at scheduled time
+
+**Symptom:** Preview works, Print Now works, but the scheduled run doesn't fire.
+
+- The scheduler runs inside the container — if the container is stopped, nothing fires. Confirm `restart: unless-stopped` is in `docker-compose.yml`.
+- Check the timezone setting matches your local timezone. A wrong timezone means the job fires at the right clock time in the wrong zone.
+- Look for scheduler errors in the logs: `docker compose logs firstlight | grep -i scheduler`
+
+### Google Calendar not showing events
+
+**Symptom:** Calendar section is empty even though authorization succeeded.
+
+- The OAuth token may have expired. Go to Settings → Setup Wizard → Calendar and re-authorize.
+- Confirm the calendar IDs in config include the calendar you expect. The wizard auto-discovers them, but if you added a new calendar after setup, re-run the wizard step.
+- Check container logs for `Calendar provider failed` warnings.
+
+### Printer not responding
+
+**Symptom:** Print Now returns an error, or the job is sent but nothing prints.
+
+- Verify the printer IP hasn't changed. Assign a DHCP reservation in your router if it changes frequently.
+- Confirm the printer is on the same network as the server.
+- CUPS runs inside the container — re-enter the printer IP in Settings to re-register it.
+
+### Getting more detail
+
+Container logs are your first stop for any issue:
+
+```bash
+docker compose logs -f firstlight
+```
+
+All provider failures, scheduler events, and print errors are logged there.
+
 ## Development
 
 All development happens inside the container (WeasyPrint has no native Windows support):
