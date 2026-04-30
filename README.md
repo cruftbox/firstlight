@@ -158,24 +158,77 @@ Calendar integration remains optional — skip step 6 in the wizard if you don't
 
 ## Configuration
 
-All configuration is stored in `config/firstlight.yaml`, which is volume-mounted into the container so it persists across rebuilds. The setup wizard writes this file — you rarely need to edit it by hand, but it is plain YAML and readable if you need to inspect or reset a value.
+All configuration lives in `config/firstlight.yaml`, volume-mounted into the container so it survives rebuilds. The setup wizard writes this file — you rarely need to touch it directly. When you do, here's how to find what you need.
 
-Key sections in the config file:
+> **Security:** `config/` may contain SMTP credentials and Google OAuth tokens. Restrict permissions on the host: `chmod 700 config/`
 
-| Section | What it controls |
-|---------|-----------------|
-| `firstlight` | Paper size, print time, timezone, printer name and IP |
-| `location` | City name, latitude, and longitude (set by the wizard) |
-| `weather` | Units (imperial/metric), AQI toggle, rain forecast toggle |
-| `quote` / `history` | Enabled/disabled flags |
-| `calendar` | Enabled flag, list of calendar IDs |
-| `sports` | Team lists per league |
-| `news` | Feed URLs, max items, max age |
-| `tasks` | Source (builtin/file/api), file path, API credentials |
-| `email` | SMTP settings |
-| `archive` | Enabled flag, retention days |
+### Minimal config (what the wizard produces)
 
-The `config/` directory may contain SMTP credentials and Google OAuth tokens — restrict its filesystem permissions on the host: `chmod 700 config/`.
+A working config after setup looks like this:
+
+```yaml
+firstlight:
+  paper_size: letter          # or a4
+  timezone: America/Los_Angeles
+  print_time: '06:30'
+  printer_ip: 192.168.4.50
+
+location:
+  city: Portland
+  lat: 45.52
+  lon: -122.68
+
+weather:
+  units: imperial             # or metric
+
+sports:
+  mlb: [LAD]
+  nfl: []
+  nba: []
+  nhl: []
+
+news:
+  max_items: 15
+  feeds:
+    - url: https://feeds.bbci.co.uk/news/rss.xml
+      label: BBC News
+```
+
+Everything not shown defaults to disabled or empty.
+
+### Common options
+
+Things you're most likely to change after initial setup:
+
+| Key | What it does | Example |
+|-----|-------------|---------|
+| `firstlight.print_time` | When to print each morning | `'06:30'` |
+| `firstlight.timezone` | Your local timezone | `America/New_York` |
+| `firstlight.paper_size` | Page size | `letter` or `a4` |
+| `firstlight.printer_ip` | Printer's LAN IP address | `192.168.1.50` |
+| `location.city` | City name shown in weather header | `Chicago` |
+| `weather.units` | Temperature and wind units | `imperial` or `metric` |
+| `sports.mlb` | List of team abbreviations to follow | `[LAD, SF]` |
+| `news.feeds` | RSS feed list (url + label per entry) | see above |
+| `news.max_items` | Total headlines per digest | `15` |
+
+### Advanced options
+
+Less common — leave at defaults until you have a reason to change them:
+
+| Key | Default | What it does |
+|-----|---------|-------------|
+| `weather.show_aqi` | `true` | Show air quality index in weather bar |
+| `weather.show_rain_forecast` | `true` | Highlight rain in next 3 days |
+| `quote.enabled` | `true` | Quote of the day section |
+| `history.enabled` | `true` | On this day in history section |
+| `archive.enabled` | `true` | Save PDF copies of past digests |
+| `archive.retention_days` | `30` | How many days of PDFs to keep |
+| `news.max_age_hours` | `24` | Ignore RSS items older than this |
+| `tasks.source` | `builtin` | `builtin`, `file`, or `api` |
+| `tasks.file_path` | `/tasks/tasks.txt` | Path when using file source |
+| `calendar.enabled` | `false` | Enable Google Calendar section |
+| `email.enabled` | `false` | Enable email delivery of PDF |
 
 ## Scheduling
 
