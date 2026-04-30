@@ -6,6 +6,18 @@ Firstlight runs 24/7 in Docker on any always-on home server or NAS, with a first
 
 ![Firstlight example digest](docs/firstlight-example-page.png)
 
+## Prerequisites
+
+| Requirement | Notes |
+|-------------|-------|
+| **Docker Engine 20.10+** or Docker Desktop | The `docker compose` plugin (v2) is required — if your system only has the older `docker-compose` command, update Docker first. |
+| **Git** | To clone the repository. |
+| **1 GB free disk space** | The base image and dependencies take ~500 MB. PDF archives add ~200–400 KB per day; the default 30-day retention uses roughly 10–15 MB. |
+| **Stable LAN IP for the server** | Recommended. A changing IP won't break daily printing, but it will break the Google Calendar OAuth callback and makes accessing the web interface less predictable. Most routers support a DHCP reservation — assign one to your server's MAC address. |
+| **Network printer with IPP Everywhere support** | Most printers made after 2015 qualify. Driverless IPP Everywhere is used — no driver installation needed. The printer must be on the same network as the server. |
+
+**Google Calendar note:** the OAuth authorization flow requires a browser to open the Google sign-in page and be redirected back to Firstlight. This means your server must be reachable at a known address (e.g. `http://192.168.4.27:8088`) from the browser you're using during setup. If the server is only accessible via `localhost`, the redirect will fail unless the browser is running on the server itself.
+
 ## Before You Begin
 
 Installation requires basic comfort with the command line — cloning a repository, editing a configuration file, and running Docker commands. You don't need to be a developer, but you should be at ease in a terminal.
@@ -117,3 +129,9 @@ All development happens inside the container (WeasyPrint has no native Windows s
 docker compose run --rm firstlight pytest tests/ -v
 docker compose up --build   # reload after code changes
 ```
+
+The `docs/superpowers/` directory contains implementation plans and design specs generated during development using the [Superpowers](https://github.com/anthropics/claude-code) plugin for Claude Code. They are developer artifacts, not end-user documentation — useful context if you want to understand the original design decisions or extend the project with AI assistance.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
