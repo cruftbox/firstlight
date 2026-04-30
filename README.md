@@ -16,13 +16,31 @@ The digest is designed to be read over coffee in a few minutes: the weather, wha
 
 This probably resonates most with people who've reached a point in life where they're actively trying to reduce screen time — not out of discipline, but because they've simply stopped finding the scroll rewarding. If that sounds familiar, Firstlight might be worth trying.
 
-## Before You Begin
+## How It Works
 
-**This project assumes basic familiarity with the command line, Docker, and editing plain text config files.** You don't need to be a developer, but you should be comfortable running commands in a terminal and not alarmed by a YAML file. If something in the setup process breaks, the Troubleshooting section and a log file will usually tell you what went wrong.
+Firstlight runs automatically each morning and prints a single-page daily digest.
 
-Using an LLM coding assistant (Claude, ChatGPT, or similar) during installation is genuinely recommended — server environments vary enough that commands sometimes need small adjustments, and an LLM can diagnose errors and explain what's happening without requiring you to search through documentation. The same applies if you want to customize or extend the project.
+1. Firstlight runs on a small always-on machine — a home server, NAS, or Raspberry Pi
+2. Each morning at the time you set, it gathers your data: weather, calendar, sports, news, to-dos
+3. It renders everything into a formatted single-page PDF
+4. It sends the PDF directly to your network printer
+5. You wake up to a ready-to-read briefing waiting on the printer
 
-The documentation includes QNAP NAS deployment notes because that's what the author runs, but Firstlight works on any always-on server or NAS that supports Docker. Expect minor differences for your environment.
+No interaction required. No phone to reach for.
+
+The web interface at `http://<your-server>:<port>` lets you preview the digest on demand, manage to-dos, browse the archive, and change settings — but on a normal day you never need to open it.
+
+## Who This Is For
+
+Firstlight is designed for people comfortable running a small self-hosted project. You don't need to be an expert, but you should be okay with:
+
+- running commands in a terminal
+- editing a plain text config file
+- setting up Docker on a home server or NAS
+
+If something breaks during setup, the Troubleshooting section and container logs will usually point to the cause. Using an LLM coding assistant (Claude, ChatGPT, or similar) is genuinely recommended — server environments vary, and an LLM can diagnose errors and adapt commands to your specific setup faster than searching documentation.
+
+The docs include QNAP NAS deployment notes because that's what the author runs, but Firstlight works on any always-on machine that supports Docker. Expect minor differences for your environment.
 
 ## Prerequisites
 
@@ -32,7 +50,7 @@ The documentation includes QNAP NAS deployment notes because that's what the aut
 - [ ] Docker Engine 20.10+ (with `docker compose` v2) or Docker Desktop
 - [ ] Git installed on your development machine
 - [ ] The server's LAN IP address (check your router — a static/reserved IP is recommended)
-- [ ] Your network printer's IP address (optional — you can skip printing during setup)
+- [ ] A network printer and its IP address — Firstlight is designed to produce a physical page each day; printing is the point
 - [ ] A Google account, if you want Calendar integration (optional)
 - [ ] ~1 GB free disk space on the server
 
