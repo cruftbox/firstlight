@@ -101,6 +101,10 @@ def step5():
         cfg["history"]["enabled"] = request.form.get("history_enabled") == "on"
         cfg["weather"]["show_aqi"] = request.form.get("show_aqi") == "on"
         cfg["weather"]["show_rain_forecast"] = request.form.get("show_rain_forecast") == "on"
+        cfg["tasks"]["source"] = request.form.get("tasks_source", "builtin")
+        file_path = request.form.get("tasks_file_path", "").strip()
+        if file_path:
+            cfg["tasks"]["file_path"] = file_path
         save_config(cfg)
         return redirect(url_for("setup.step6"))
     preview_quote = None

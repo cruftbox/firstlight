@@ -68,14 +68,14 @@
       {% endif %}
     </section>
 
+    {% if todos %}
     <section class="todo-section">
       <h2>TO-DO</h2>
       {% for item in todos %}
-      <div class="todo-item">☐ {{ item.text }}</div>
-      {% else %}
-      <div class="empty">Nothing on the list</div>
+      <div class="todo-item">☐ {{ item }}</div>
       {% endfor %}
     </section>
+    {% endif %}
   </div>
 
   {% if sports %}

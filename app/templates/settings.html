@@ -70,6 +70,31 @@
   </div>
 
   <div class="card mb-4">
+    <div class="card-header fw-bold">To-Do</div>
+    <div class="card-body">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Source</label>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="tasks_source" id="settingsSourceBuiltin"
+                 value="builtin" {% if config.tasks.source != 'file' %}checked{% endif %}>
+          <label class="form-check-label" for="settingsSourceBuiltin">Built-in list <span class="text-muted small">(managed at <a href="/todo">/todo</a>)</span></label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="tasks_source" id="settingsSourceFile"
+                 value="file" {% if config.tasks.source == 'file' %}checked{% endif %}>
+          <label class="form-check-label" for="settingsSourceFile">Plain text file <span class="text-muted small">(e.g. synced via Syncthing)</span></label>
+        </div>
+      </div>
+      <div id="settingsFilePathRow" {% if config.tasks.source != 'file' %}style="display:none"{% endif %}>
+        <label class="form-label">File path inside the container</label>
+        <input type="text" name="tasks_file_path" class="form-control"
+               value="{{ config.tasks.file_path }}" placeholder="/tasks/tasks.txt">
+        <div class="form-text">Mount the host folder in <code>docker-compose.yml</code> as a read-only volume.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
     <div class="card-header fw-bold">Archive</div>
     <div class="card-body">
       <div class="form-check form-switch mb-3">
@@ -135,4 +160,12 @@
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/time-scroll.js') }}"></script>
+<script>
+  document.querySelectorAll('input[name="tasks_source"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      document.getElementById('settingsFilePathRow').style.display =
+        this.value === 'file' ? '' : 'none';
+    });
+  });
+</script>
 {% endblock %}

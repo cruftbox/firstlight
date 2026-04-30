@@ -40,6 +40,7 @@ DEFAULT_CONFIG = {
         "wnba": [], "nwsl": [], "mls": [], "premier_league": [],
     },
     "news": {"max_age_hours": 24, "max_items": 15, "feeds": []},
+    "tasks": {"source": "builtin", "file_path": "/tasks/tasks.txt"},
 }
 
 

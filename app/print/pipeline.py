@@ -63,18 +63,23 @@ def collect_data(config: dict) -> dict:
         "calendar_tomorrow": calendar_tomorrow,
         "sports": sports_data,
         "news": news_data,
-        "todos": _load_todos(),
+        "todos": _load_todos(config),
         "history": history_data,
     }
 
 
-def _load_todos() -> list:
+def _load_todos(config: dict = None) -> list:
+    source = (config or {}).get("tasks", {}).get("source", "builtin")
+    if source == "file":
+        from app.providers.tasks import get_tasks
+        file_path = (config or {}).get("tasks", {}).get("file_path", "/tasks/tasks.txt")
+        return get_tasks(file_path)
     todos_path = Path("/app/config/todos.json")
     if not todos_path.exists():
         return []
     try:
         items = json.loads(todos_path.read_text())
-        return [item for item in items if not item.get("done", False)]
+        return [item["text"] for item in items if not item.get("done", False) and item.get("text")]
     except Exception:
         return []
 

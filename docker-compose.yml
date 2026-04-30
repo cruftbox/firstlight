@@ -6,6 +6,7 @@ services:
       - "5000:5000"
     volumes:
       - ./config:/app/config
+      - /share/apps/tasks:/tasks:ro
     restart: unless-stopped
     environment:
       - FLASK_ENV=production
