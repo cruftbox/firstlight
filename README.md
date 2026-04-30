@@ -87,13 +87,12 @@ Open `.env` and replace `changeme-replace-with-a-long-random-string` with any lo
 docker compose up --build
 ```
 
-The first build downloads the base image and installs dependencies — expect **3–5 minutes**. You'll see log output as it progresses. When you see a line like:
+The first build downloads the base image and installs dependencies — expect **3–5 minutes**. You'll see log output as it progresses. When you see a line containing `Running on` in the output, Firstlight is running:
 
 ```
-firstlight  | * Running on http://0.0.0.0:5000
+firstlight  |  * Running on all addresses (0.0.0.0)
+firstlight  |  * Running on http://127.0.0.1:5000
 ```
-
-Firstlight is running.
 
 ### 3. Complete the setup wizard
 
@@ -154,13 +153,21 @@ The only step that requires external account setup is Google Calendar, and that 
 
 ### Generating SECRET_KEY
 
-SECRET_KEY is a random string used to sign Flask session cookies. It never leaves your server. Generate one with:
+SECRET_KEY is a random string used to sign Flask session cookies. It never leaves your server. Any long random string works — it just needs to be consistent across container restarts.
 
+If you have Python available:
 ```bash
 python3 -c "import secrets; print(secrets.token_hex(32))"
+# or on Windows:
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-Paste the output into your `.env` file. Any long random string works — it just needs to be consistent across container restarts.
+If you have OpenSSL available (Linux/Mac/WSL):
+```bash
+openssl rand -hex 32
+```
+
+Or use any password manager's random string generator — 32+ characters, any mix of letters and numbers.
 
 ## Google Calendar Setup
 
