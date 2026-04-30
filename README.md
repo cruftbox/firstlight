@@ -28,7 +28,7 @@ Open http://localhost:5000 and complete the 10-step setup wizard.
 - **To-do list** — built-in web UI, plain text file (e.g. Syncthing), or external REST API
 - **PDF archive** with configurable retention (default 30 days)
 - **Email delivery** (SMTP; supports Gmail App Passwords)
-- **CUPS printer** integration via `lpr`
+- **Network printer** via CUPS inside the container — enter your printer's IP in the wizard, no drivers needed
 
 ## Configuration
 
