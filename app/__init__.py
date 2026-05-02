@@ -1,8 +1,12 @@
+import logging
 import os
 from flask import Flask, redirect, url_for, request
 
 
 def create_app():
+    logging.getLogger("app").setLevel(logging.INFO)
+    logging.getLogger("apscheduler").setLevel(logging.INFO)
+
     app = Flask(__name__)
     app.secret_key = os.environ.get("SECRET_KEY", "changeme")
 
