@@ -62,9 +62,16 @@
     </div>
     <div id="filePathRow" class="mt-2 ms-4" {% if config.tasks.source != 'file' %}style="display:none"{% endif %}>
       <label class="form-label small mb-1">File path inside the container</label>
-      <input type="text" name="tasks_file_path" class="form-control form-control-sm"
-             value="{{ config.tasks.file_path }}" placeholder="/tasks/tasks.txt">
+      <div class="input-group input-group-sm">
+        <input type="text" name="tasks_file_path" id="tasksFilePath" class="form-control font-monospace"
+               value="{{ config.tasks.file_path }}" placeholder="/tasks/tasks.txt">
+        <button type="button" class="btn btn-outline-secondary" onclick="toggleBrowser()">Browse…</button>
+      </div>
       <div class="form-text">Mount the host folder in <code>docker-compose.yml</code> as a read-only volume.</div>
+      <div id="fileBrowser" class="border rounded mt-2 p-2" style="display:none; max-height:220px; overflow-y:auto; font-size:0.85em">
+        <div id="browserPath" class="text-muted font-monospace mb-1"></div>
+        <div id="browserList"></div>
+      </div>
     </div>
     <div class="form-check mt-2">
       <input class="form-check-input" type="radio" name="tasks_source" id="sourceApi"
@@ -100,6 +107,49 @@
       document.getElementById('filePathRow').style.display = this.value === 'file' ? '' : 'none';
       document.getElementById('apiFieldsRow').style.display = this.value === 'api' ? '' : 'none';
     });
+  });
+
+  function toggleBrowser() {
+    var browser = document.getElementById('fileBrowser');
+    var open = browser.style.display !== 'none';
+    browser.style.display = open ? 'none' : '';
+    if (!open) {
+      var p = document.getElementById('tasksFilePath').value || '/tasks';
+      browseTo(p);
+    }
+  }
+
+  function browseTo(path) {
+    fetch('/setup/browse?path=' + encodeURIComponent(path))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        document.getElementById('browserPath').textContent = data.path;
+        var html = '';
+        if (data.error) {
+          html = '<span class="text-danger">' + data.error + '</span>';
+        } else {
+          data.entries.forEach(function(e) {
+            var icon = e.is_dir ? '📁' : '📄';
+            var style = 'cursor:pointer; padding:2px 4px; border-radius:3px;';
+            html += '<div class="browser-entry" style="' + style + '" '
+                  + 'data-path="' + e.path.replace(/"/g, '&quot;') + '" '
+                  + 'data-isdir="' + e.is_dir + '">'
+                  + icon + ' ' + e.name + '</div>';
+          });
+        }
+        document.getElementById('browserList').innerHTML = html;
+      });
+  }
+
+  document.getElementById('browserList').addEventListener('click', function(e) {
+    var entry = e.target.closest('.browser-entry');
+    if (!entry) return;
+    if (entry.dataset.isdir === 'true') {
+      browseTo(entry.dataset.path);
+    } else {
+      document.getElementById('tasksFilePath').value = entry.dataset.path;
+      document.getElementById('fileBrowser').style.display = 'none';
+    }
   });
 </script>
 {% endblock %}

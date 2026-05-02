@@ -40,35 +40,42 @@
 </div>
 
 {% if auth_url %}
-<p class="fw-semibold mb-1">Step 1 — Authorize with Google</p>
-<p class="small text-muted">Click the button below. Sign in and grant access on Google's page.</p>
-<div class="d-grid mb-3">
-  <a href="{{ auth_url }}" target="_blank" class="btn btn-primary">Authorize Google Calendar →</a>
-</div>
-
-<div class="alert alert-warning">
-  <strong>⚠️ You will see an error page — this is normal.</strong><br>
-  After granting access, your browser will redirect to <code>localhost</code> and show
-  a <em>"This site can't be reached"</em> or <em>"Connection refused"</em> error.
-  <strong>Do not close that tab.</strong> The URL in your address bar contains your
-  authorization code.
-</div>
-
-<p class="fw-semibold mb-1">Step 2 — Copy and paste the URL</p>
-<p class="small text-muted">From the error page, copy the <strong>full URL</strong> from your
-  browser's address bar — it starts with <code>http://localhost/setup/6/callback?code=</code>
-  — and paste it below.</p>
-<form method="POST">
-  <input type="hidden" name="action" value="complete_oauth">
-  <div class="mb-2">
-    <input type="text" name="redirect_response" class="form-control font-monospace"
-           placeholder="http://localhost/setup/6/callback?code=...&state=..." required>
+  {% if paste_flow %}
+  <p class="fw-semibold mb-1">Step 1 — Authorize with Google</p>
+  <p class="small text-muted">Click the button below. Sign in and grant access on Google's page.</p>
+  <div class="d-grid mb-3">
+    <a href="{{ auth_url }}" target="_blank" class="btn btn-primary">Authorize Google Calendar →</a>
   </div>
+  <div class="alert alert-warning">
+    <strong>⚠️ You will see an error page — this is normal.</strong><br>
+    After granting access, your browser will redirect to <code>localhost</code> and show
+    a <em>"This site can't be reached"</em> or <em>"Connection refused"</em> error.
+    <strong>Do not close that tab.</strong> The URL in your address bar contains your
+    authorization code.
+  </div>
+  <p class="fw-semibold mb-1">Step 2 — Copy and paste the URL</p>
+  <p class="small text-muted">From the error page, copy the <strong>full URL</strong> from your
+    browser's address bar — it starts with <code>http://localhost/setup/6/callback?code=</code>
+    — and paste it below.</p>
+  <form method="POST">
+    <input type="hidden" name="action" value="complete_oauth">
+    <div class="mb-2">
+      <input type="text" name="redirect_response" class="form-control font-monospace"
+             placeholder="http://localhost/setup/6/callback?code=...&state=..." required>
+    </div>
+    <div class="d-grid gap-2">
+      <button type="submit" class="btn btn-success">Complete Authorization →</button>
+      <button type="submit" form="skipForm" name="action" value="skip" class="btn btn-outline-secondary">Skip</button>
+    </div>
+  </form>
+  {% else %}
+  <p class="small text-muted">Sign in with Google and grant calendar read access. You'll be
+    redirected back here automatically.</p>
   <div class="d-grid gap-2">
-    <button type="submit" class="btn btn-success">Complete Authorization →</button>
+    <a href="{{ auth_url }}" class="btn btn-primary">Authorize Google Calendar →</a>
     <button type="submit" form="skipForm" name="action" value="skip" class="btn btn-outline-secondary">Skip</button>
   </div>
-</form>
+  {% endif %}
 {% else %}
 <a href="/setup/6" class="btn btn-primary">Reload to generate auth link</a>
 {% endif %}

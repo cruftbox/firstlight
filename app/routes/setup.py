@@ -17,9 +17,22 @@ def _safe_int(val, default: int) -> int:
 
 setup_bp = Blueprint("setup", __name__, url_prefix="/setup")
 
-# Hardcoded redirect URI so OAuth works regardless of server IP.
-# Users must add this exact URI to their Google Cloud Console.
+# Redirect URI used when the app is on a remote server (NAS, etc.).
+# Google rejects private IPs, so we redirect to localhost and use a paste-back flow.
 OAUTH_REDIRECT_URI = "http://localhost/setup/6/callback"
+
+
+def _oauth_redirect_uri(request) -> tuple[str, bool]:
+    """Return (redirect_uri, paste_flow).
+
+    On localhost the callback comes back directly to the running app.
+    On a remote host Google can't reach the server, so we use a fixed
+    localhost URI and ask the user to paste the redirect URL back.
+    """
+    host = request.host
+    if host.startswith("localhost") or host.startswith("127.0.0.1"):
+        return request.url_root.rstrip("/") + "/setup/6/callback", False
+    return OAUTH_REDIRECT_URI, True
 
 
 @setup_bp.route("/1", methods=["GET", "POST"])
@@ -211,6 +224,7 @@ def step6():
 
     # Pre-generate the Google auth URL so the template can link directly to it.
     # This avoids any Flask/Werkzeug redirect handling that mangles https:// URLs.
+    redirect_uri, paste_flow = _oauth_redirect_uri(request)
     auth_url = None
     if creds_path.exists() and not token_path.exists():
         try:
@@ -219,11 +233,11 @@ def step6():
             flow = Flow.from_client_secrets_file(
                 str(creds_path),
                 scopes=["https://www.googleapis.com/auth/calendar.readonly"],
-                redirect_uri=OAUTH_REDIRECT_URI,
+                redirect_uri=redirect_uri,
             )
             auth_url, state = flow.authorization_url(access_type="offline", prompt="consent")
             session["oauth_state"] = state
-            session["oauth_redirect_uri"] = OAUTH_REDIRECT_URI
+            session["oauth_redirect_uri"] = redirect_uri
             session["oauth_code_verifier"] = getattr(flow, "code_verifier", None)
             logging.info("Step6 generated auth_url starting: %s", auth_url[:60])
         except Exception as exc:
@@ -234,6 +248,7 @@ def step6():
         "setup/step6_calendar.html", config=cfg,
         creds_exist=creds_path.exists(), token_exist=token_path.exists(),
         error=error, authorized=authorized, auth_url=auth_url,
+        paste_flow=paste_flow,
     )
 
 
@@ -247,16 +262,17 @@ def calendar_authorize():
     if not creds_path.exists():
         return redirect(url_for("setup.step6") + "?" + urlencode({"error": "Credentials not saved yet"}))
 
+    redirect_uri, _ = _oauth_redirect_uri(request)
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-    logging.info("Calendar OAuth authorize — redirect_uri: %s", OAUTH_REDIRECT_URI)
+    logging.info("Calendar OAuth authorize — redirect_uri: %s", redirect_uri)
     flow = Flow.from_client_secrets_file(
         str(creds_path),
         scopes=["https://www.googleapis.com/auth/calendar.readonly"],
-        redirect_uri=OAUTH_REDIRECT_URI,
+        redirect_uri=redirect_uri,
     )
     auth_url, state = flow.authorization_url(access_type="offline", prompt="consent")
     session["oauth_state"] = state
-    session["oauth_redirect_uri"] = OAUTH_REDIRECT_URI
+    session["oauth_redirect_uri"] = redirect_uri
 
     # Werkzeug's redirect() mangles external https:// URLs in newer versions,
     # causing the browser to request them as relative paths. Serve an HTML page
@@ -441,6 +457,27 @@ def test_email():
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
+
+
+@setup_bp.route("/browse")
+def browse():
+    import os
+    path = os.path.normpath(request.args.get("path", "/tasks"))
+    if not os.path.isdir(path):
+        path = os.path.dirname(path)
+    try:
+        entries = []
+        parent = os.path.dirname(path)
+        if parent != path:
+            entries.append({"name": "..", "path": parent, "is_dir": True})
+        for name in sorted(os.listdir(path)):
+            full = os.path.join(path, name)
+            entries.append({"name": name, "path": full, "is_dir": os.path.isdir(full)})
+        return jsonify({"path": path, "entries": entries})
+    except PermissionError:
+        return jsonify({"path": path, "entries": [], "error": "Permission denied"})
+    except Exception as exc:
+        return jsonify({"path": path, "entries": [], "error": str(exc)})
 
 
 @setup_bp.route("/10", methods=["GET", "POST"])

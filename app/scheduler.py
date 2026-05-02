@@ -1,9 +1,7 @@
 import logging
-import threading
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
-import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -24,7 +22,6 @@ def start_scheduler(app) -> None:
         scheduler.start()
     job = scheduler.get_job("daily_digest")
     logger.info("Scheduler started; next run: %s", job.next_run_time if job else "unknown")
-    _check_missed_print(print_time, timezone)
 
 
 def reschedule(print_time: str, timezone: str) -> None:
@@ -44,34 +41,6 @@ def _add_job(print_time: str, timezone: str) -> None:
     )
     logger.info("Scheduled daily digest for %s:%s %s", hour, minute, timezone)
 
-
-def _check_missed_print(print_time: str, timezone: str) -> None:
-    """On startup, run the pipeline immediately if past print time and today's digest is missing."""
-    today = date.today()
-    try:
-        last = date.fromisoformat(_LAST_PRINTED.read_text().strip())
-        if last >= today:
-            logger.info("Digest already ran today (%s), no catch-up needed", today)
-            return
-    except (FileNotFoundError, ValueError):
-        pass
-
-    tz = pytz.timezone(timezone)
-    now = datetime.now(tz)
-    hour, minute = (int(x) for x in print_time.split(":"))
-    scheduled = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-
-    if now >= scheduled:
-        logger.info(
-            "Startup at %s is past print time %s with no digest for %s — running catch-up",
-            now.strftime("%H:%M"), print_time, today,
-        )
-        threading.Thread(target=_run_pipeline, daemon=True, name="catch-up").start()
-    else:
-        logger.info(
-            "Startup at %s is before print time %s, catch-up not needed",
-            now.strftime("%H:%M"), print_time,
-        )
 
 
 def _run_pipeline() -> None:
