@@ -4,6 +4,11 @@ from flask import Flask, redirect, url_for, request
 
 
 def create_app():
+    if not logging.root.handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        )
     logging.getLogger("app").setLevel(logging.INFO)
     logging.getLogger("apscheduler").setLevel(logging.INFO)
 
