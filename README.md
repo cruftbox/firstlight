@@ -107,7 +107,7 @@ You'll be redirected to the setup wizard automatically. It covers:
 | 2 | Location (for weather) |
 | 3 | Print time and timezone |
 | 4 | Network printer IP |
-| 5 | Optional content — quote, history, AQI, to-do source |
+| 5 | Optional content — quote, history, AQI, to-do source and file path (with file browser) |
 | 6 | Google Calendar (optional — skip if not needed) |
 | 7 | Sports teams |
 | 8 | News RSS feeds |
@@ -195,15 +195,19 @@ For a personal tool accessing your own calendar, **OAuth Client ID is the right 
 
 ### How the authorization flow works
 
-Firstlight uses a paste-back flow that works regardless of where the server is hosted:
+The flow depends on where you're running the setup wizard:
 
-1. In the setup wizard, click **Authorize Google Calendar →** — Google's sign-in page opens in a new tab.
+**Running locally (Docker Desktop, `localhost:5000`):** Click **Authorize Google Calendar →**, sign in, and you'll be redirected back to the wizard automatically. No extra steps.
+
+**Running on a NAS or remote server:** Google can't redirect back to a private IP address, so Firstlight uses a paste-back flow instead:
+
+1. Click **Authorize Google Calendar →** — Google's sign-in page opens in a new tab.
 2. Sign in and grant calendar read access.
 3. Your browser will redirect to `localhost` and show a **"This site can't be reached"** or **"Connection refused"** error. **This is expected and normal.**
 4. Copy the full URL from your browser's address bar — it starts with `http://localhost/setup/6/callback?code=`.
 5. Paste that URL into the field on the setup page and click **Complete Authorization**.
 
-Firstlight extracts the authorization code from the pasted URL and exchanges it for a token. Google doesn't need to reach your server directly.
+Firstlight extracts the authorization code from the pasted URL and exchanges it for a token.
 
 **After authorization:** Firstlight stores the refresh token in `config/google_token.json`. The token renews itself silently each day. You won't need to re-authorize unless you change the credentials file or revoke access via your Google account settings.
 
@@ -305,7 +309,7 @@ If you want to trigger a print outside the scheduled time, use the **Print Now**
 curl -X POST http://<your-server>:<port>/print
 ```
 
-If the container restarts after a reboot, the scheduler resumes automatically. If the container starts after the scheduled print time and that day's digest hasn't been printed yet, Firstlight runs the pipeline immediately on startup — so a reboot never causes a missed print. On a NAS with `restart: unless-stopped` in `docker-compose.yml`, Firstlight starts on boot without any additional configuration.
+If the container restarts after a reboot, the scheduler resumes automatically and the next print fires at the next scheduled time. On a NAS with `restart: unless-stopped` in `docker-compose.yml`, Firstlight starts on boot without any additional configuration.
 
 ## Deployment (QNAP NAS)
 
