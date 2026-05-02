@@ -64,10 +64,10 @@ The docs include QNAP NAS deployment notes because that's what the author runs, 
 | **Docker Engine 20.10+** or Docker Desktop | The `docker compose` plugin (v2) is required — if your system only has the older `docker-compose` command, update Docker first. |
 | **Git** | To clone the repository. |
 | **1 GB free disk space** | The base image and dependencies take ~500 MB. PDF archives add ~200–400 KB per day; the default 30-day retention uses roughly 10–15 MB. |
-| **Stable LAN IP for the server** | Recommended. A changing IP won't break daily printing, but it will break the Google Calendar OAuth callback and makes accessing the web interface less predictable. Most routers support a DHCP reservation — assign one to your server's MAC address. |
+| **Stable LAN IP for the server** | Recommended but not required. A changing IP won't break printing or Google Calendar OAuth (which no longer depends on the server's IP). It does make accessing the web interface less predictable. Most routers support a DHCP reservation — assign one to your server's MAC address. |
 | **Network printer with IPP Everywhere support** | Most printers made after 2015 qualify. Driverless IPP Everywhere is used — no driver installation needed. The printer must be on the same network as the server. |
 
-**Google Calendar note:** the OAuth authorization flow requires a browser to open the Google sign-in page and be redirected back to Firstlight. This means your server must be reachable at a known address (e.g. `http://192.168.4.27:8088`) from the browser you're using during setup. If the server is only accessible via `localhost`, the redirect will fail unless the browser is running on the server itself.
+**Google Calendar note:** the OAuth flow uses a paste-back approach — after you authorize on Google's page, your browser will show a connection error (expected), and you copy the URL from the address bar back into the setup wizard. No special network access or server IP is required.
 
 ## Getting Started
 
@@ -87,11 +87,12 @@ Open `.env` and replace `changeme-replace-with-a-long-random-string` with any lo
 docker compose up --build
 ```
 
-The first build downloads the base image and installs dependencies — expect **3–5 minutes**. You'll see log output as it progresses. When you see a line containing `Running on` in the output, Firstlight is running:
+The first build downloads the base image and installs dependencies — expect **3–5 minutes**. You'll see log output as it progresses. When you see lines like the following, Firstlight is running:
 
 ```
-firstlight  |  * Running on all addresses (0.0.0.0)
-firstlight  |  * Running on http://127.0.0.1:5000
+firstlight  | [INFO] Starting gunicorn
+firstlight  | [INFO] Listening at: http://0.0.0.0:5000
+firstlight  | [INFO] Booting worker with pid: ...
 ```
 
 ### 3. Complete the setup wizard
@@ -189,10 +190,20 @@ For a personal tool accessing your own calendar, **OAuth Client ID is the right 
 2. **Enable the Calendar API:** APIs & Services → Library → search "Google Calendar API" → Enable.
 3. **Configure the consent screen:** APIs & Services → OAuth consent screen → choose **External** → fill in an app name (anything) → add your Google account email as a **test user** → save.
 4. **Create credentials:** APIs & Services → Credentials → Create Credentials → OAuth client ID → application type: **Web application**.
-5. **Add the redirect URI:** under "Authorized redirect URIs", add `http://<your-server-address>/setup/6/callback`. For example: `http://192.168.4.27:8088/setup/6/callback`. This must match exactly — wrong port or IP and the authorization will fail.
+5. **Add the redirect URI:** under "Authorized redirect URIs", add exactly: `http://localhost/setup/6/callback`. No port, no server IP — this exact string.
 6. Click **Download JSON** and copy its contents into the setup wizard at step 6.
 
-Google will open a consent screen in your browser. Sign in, grant calendar read access, and you'll be redirected back to the wizard automatically.
+### How the authorization flow works
+
+Firstlight uses a paste-back flow that works regardless of where the server is hosted:
+
+1. In the setup wizard, click **Authorize Google Calendar →** — Google's sign-in page opens in a new tab.
+2. Sign in and grant calendar read access.
+3. Your browser will redirect to `localhost` and show a **"This site can't be reached"** or **"Connection refused"** error. **This is expected and normal.**
+4. Copy the full URL from your browser's address bar — it starts with `http://localhost/setup/6/callback?code=`.
+5. Paste that URL into the field on the setup page and click **Complete Authorization**.
+
+Firstlight extracts the authorization code from the pasted URL and exchanges it for a token. Google doesn't need to reach your server directly.
 
 **After authorization:** Firstlight stores the refresh token in `config/google_token.json`. The token renews itself silently each day. You won't need to re-authorize unless you change the credentials file or revoke access via your Google account settings.
 
@@ -294,32 +305,53 @@ If you want to trigger a print outside the scheduled time, use the **Print Now**
 curl -X POST http://<your-server>:<port>/print
 ```
 
-If the container restarts (after a reboot, for example), the scheduler resumes automatically. On a NAS with `restart: unless-stopped` in `docker-compose.yml`, Firstlight starts on boot without any additional configuration.
+If the container restarts after a reboot, the scheduler resumes automatically. If the container starts after the scheduled print time and that day's digest hasn't been printed yet, Firstlight runs the pipeline immediately on startup — so a reboot never causes a missed print. On a NAS with `restart: unless-stopped` in `docker-compose.yml`, Firstlight starts on boot without any additional configuration.
 
 ## Deployment (QNAP NAS)
 
 QNAP does not have Git installed on the host. Use the `alpine/git` Docker image for all Git operations.
 
-**First-time setup:**
+### Storage: use CACHEDEV1_DATA, not /share directly
+
+On QNAP, `/share` is a small `tmpfs` RAM disk used as a namespace for mount points. **Files written directly to `/share/somefolder` are wiped on every reboot.** Your persistent storage is under `/share/CACHEDEV1_DATA/` (or the equivalent pool name for your model).
+
+Always clone the repository under `/share/CACHEDEV1_DATA/`:
+
 ```bash
-mkdir -p /share/firstlight
-docker run --rm -v /share/firstlight:/repo alpine/git clone https://github.com/cruftbox/firstlight.git /repo
-chmod 700 /share/firstlight/config
-cd /share/firstlight
+docker run --rm -v /share/CACHEDEV1_DATA:/data -w /data alpine/git clone https://github.com/cruftbox/firstlight.git firstlight
+```
+
+The `config/` directory (which holds your settings and Google token) is volume-mounted by Docker and lives persistently at `/share/CACHEDEV1_DATA/firstlight/config/`.
+
+### Port mapping
+
+QNAP uses ports 5000 and 5001 internally. The default `docker-compose.yml` maps `5000:5000`. Change this to an available port before starting:
+
+```bash
+sed -i 's/5000:5000/8088:5000/' /share/CACHEDEV1_DATA/firstlight/docker-compose.yml
+```
+
+### First-time setup
+
+```bash
+docker run --rm -v /share/CACHEDEV1_DATA:/data -w /data alpine/git clone https://github.com/cruftbox/firstlight.git firstlight
+sed -i 's/5000:5000/8088:5000/' /share/CACHEDEV1_DATA/firstlight/docker-compose.yml
+cd /share/CACHEDEV1_DATA/firstlight
 sudo docker compose up -d --build
 ```
 
-**Updating to the latest version:**
+### Updating to the latest version
+
 ```bash
-sudo /share/firstlight/update.sh
+sudo /share/CACHEDEV1_DATA/firstlight/update.sh
 ```
 
 The included `update.sh` script pulls the latest code via `alpine/git` and rebuilds the container. If you have local changes to `docker-compose.yml` (e.g. a custom port mapping), stash them first:
 
 ```bash
-docker run --rm -v /share/firstlight:/repo alpine/git -C /repo stash
-sudo /share/firstlight/update.sh
-docker run --rm -v /share/firstlight:/repo alpine/git -C /repo stash pop
+docker run --rm -v /share/CACHEDEV1_DATA/firstlight:/repo alpine/git -C /repo stash
+sudo /share/CACHEDEV1_DATA/firstlight/update.sh
+docker run --rm -v /share/CACHEDEV1_DATA/firstlight:/repo alpine/git -C /repo stash pop
 ```
 
 ## Customizing and Adding Sections
