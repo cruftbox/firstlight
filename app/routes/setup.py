@@ -17,6 +17,10 @@ def _safe_int(val, default: int) -> int:
 
 setup_bp = Blueprint("setup", __name__, url_prefix="/setup")
 
+# Hardcoded redirect URI so OAuth works regardless of server IP.
+# Users must add this exact URI to their Google Cloud Console.
+OAUTH_REDIRECT_URI = "http://localhost/setup/6/callback"
+
 
 @setup_bp.route("/1", methods=["GET", "POST"])
 def step1():
@@ -134,6 +138,50 @@ def step6():
         if request.form.get("action") == "skip":
             return redirect(url_for("setup.step7"))
 
+        if request.form.get("action") == "complete_oauth":
+            redirect_response = request.form.get("redirect_response", "").strip()
+            if not redirect_response:
+                return render_template(
+                    "setup/step6_calendar.html", config=cfg,
+                    creds_exist=creds_path.exists(), token_exist=token_path.exists(),
+                    error="Paste the redirect URL from your browser's address bar.",
+                )
+            try:
+                from google_auth_oauthlib.flow import Flow
+                from googleapiclient.discovery import build
+                os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+                flow = Flow.from_client_secrets_file(
+                    str(creds_path),
+                    scopes=["https://www.googleapis.com/auth/calendar.readonly"],
+                    redirect_uri=OAUTH_REDIRECT_URI,
+                    state=session.get("oauth_state"),
+                )
+                code_verifier = session.get("oauth_code_verifier")
+                if code_verifier:
+                    flow.code_verifier = code_verifier
+                flow.fetch_token(authorization_response=redirect_response)
+                creds = flow.credentials
+                token_path.write_text(creds.to_json(), encoding="utf-8")
+                cfg = load_config()
+                cfg["calendar"]["enabled"] = True
+                save_config(cfg)
+                try:
+                    service = build("calendar", "v3", credentials=creds)
+                    cal_list = service.calendarList().list().execute()
+                    cfg = load_config()
+                    cfg["calendar"]["calendar_ids"] = [c["id"] for c in cal_list.get("items", [])]
+                    save_config(cfg)
+                except Exception as exc:
+                    logging.warning("Could not fetch calendar list (non-fatal): %s", exc)
+            except Exception as exc:
+                logging.error("OAuth complete_oauth error: %s", exc)
+                return render_template(
+                    "setup/step6_calendar.html", config=cfg,
+                    creds_exist=creds_path.exists(), token_exist=token_path.exists(),
+                    error=str(exc)[:300],
+                )
+            return redirect(url_for("setup.step6") + "?authorized=1")
+
         creds_json = request.form.get("credentials_json", "").strip()
         if creds_json:
             try:
@@ -168,15 +216,14 @@ def step6():
         try:
             from google_auth_oauthlib.flow import Flow
             os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-            callback_url = request.url_root.rstrip("/") + "/setup/6/callback"
             flow = Flow.from_client_secrets_file(
                 str(creds_path),
                 scopes=["https://www.googleapis.com/auth/calendar.readonly"],
-                redirect_uri=callback_url,
+                redirect_uri=OAUTH_REDIRECT_URI,
             )
             auth_url, state = flow.authorization_url(access_type="offline", prompt="consent")
             session["oauth_state"] = state
-            session["oauth_redirect_uri"] = callback_url
+            session["oauth_redirect_uri"] = OAUTH_REDIRECT_URI
             session["oauth_code_verifier"] = getattr(flow, "code_verifier", None)
             logging.info("Step6 generated auth_url starting: %s", auth_url[:60])
         except Exception as exc:
@@ -201,16 +248,15 @@ def calendar_authorize():
         return redirect(url_for("setup.step6") + "?" + urlencode({"error": "Credentials not saved yet"}))
 
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-    callback_url = request.url_root.rstrip("/") + "/setup/6/callback"
-    logging.info("Calendar OAuth authorize — callback_url: %s", callback_url)
+    logging.info("Calendar OAuth authorize — redirect_uri: %s", OAUTH_REDIRECT_URI)
     flow = Flow.from_client_secrets_file(
         str(creds_path),
         scopes=["https://www.googleapis.com/auth/calendar.readonly"],
-        redirect_uri=callback_url,
+        redirect_uri=OAUTH_REDIRECT_URI,
     )
     auth_url, state = flow.authorization_url(access_type="offline", prompt="consent")
     session["oauth_state"] = state
-    session["oauth_redirect_uri"] = callback_url
+    session["oauth_redirect_uri"] = OAUTH_REDIRECT_URI
 
     # Werkzeug's redirect() mangles external https:// URLs in newer versions,
     # causing the browser to request them as relative paths. Serve an HTML page

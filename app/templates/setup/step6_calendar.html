@@ -36,20 +36,35 @@
 
 {% elif creds_exist %}
 <div class="alert alert-info py-2 small">
-  <strong>Credentials saved.</strong> Now authorize Firstlight to access your Google Calendar.
+  <strong>Credentials saved.</strong> Follow the two steps below to authorize Google Calendar.
 </div>
-<p class="small text-muted">
-  Google will open in your browser. Sign in and grant calendar access, then you'll be
-  redirected back here automatically.
-</p>
-<div class="d-grid gap-2">
-  {% if auth_url %}
-  <a href="{{ auth_url }}" class="btn btn-primary">Authorize Google Calendar →</a>
-  {% else %}
-  <a href="/setup/6" class="btn btn-primary">Reload to generate auth link</a>
-  {% endif %}
-  <button type="submit" form="skipForm" name="action" value="skip" class="btn btn-outline-secondary">Skip</button>
+
+{% if auth_url %}
+<p class="fw-semibold mb-1">Step 1 — Authorize with Google</p>
+<p class="small text-muted">Click the button below. After granting access, your browser will show a
+  <em>connection refused</em> error — that's expected.</p>
+<div class="d-grid mb-3">
+  <a href="{{ auth_url }}" target="_blank" class="btn btn-primary">Authorize Google Calendar →</a>
 </div>
+
+<p class="fw-semibold mb-1">Step 2 — Paste the redirect URL</p>
+<p class="small text-muted">Copy the full URL from your browser's address bar (it starts with
+  <code>http://localhost/setup/6/callback?code=</code>) and paste it here.</p>
+<form method="POST">
+  <input type="hidden" name="action" value="complete_oauth">
+  <div class="mb-2">
+    <input type="text" name="redirect_response" class="form-control font-monospace"
+           placeholder="http://localhost/setup/6/callback?code=...&state=..." required>
+  </div>
+  <div class="d-grid gap-2">
+    <button type="submit" class="btn btn-success">Complete Authorization →</button>
+    <button type="submit" form="skipForm" name="action" value="skip" class="btn btn-outline-secondary">Skip</button>
+  </div>
+</form>
+{% else %}
+<a href="/setup/6" class="btn btn-primary">Reload to generate auth link</a>
+{% endif %}
+
 <form id="skipForm" method="POST"></form>
 <hr class="my-3">
 <p class="text-muted small">Replace credentials.json:</p>
@@ -68,7 +83,7 @@
   <li class="mb-1"><strong>Enable the Calendar API:</strong> APIs &amp; Services → Library → search "Google Calendar API" → Enable.</li>
   <li class="mb-1"><strong>Configure consent screen:</strong> APIs &amp; Services → OAuth consent screen → External → add your Google account as a test user.</li>
   <li class="mb-1"><strong>Create credentials:</strong> APIs &amp; Services → Credentials → Create Credentials → OAuth client ID → choose <strong>Web application</strong>.</li>
-  <li class="mb-1"><strong>Add redirect URI:</strong> under "Authorized redirect URIs" add <code>http://&lt;your-server-address&gt;/setup/6/callback</code> (e.g. <code>http://192.168.4.27:8088/setup/6/callback</code>).</li>
+  <li class="mb-1"><strong>Add redirect URI:</strong> under "Authorized redirect URIs" add exactly <code>http://localhost/setup/6/callback</code>.</li>
   <li>Download the JSON and paste its contents below.</li>
 </ol>
 <form method="POST">
