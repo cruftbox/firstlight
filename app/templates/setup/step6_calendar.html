@@ -41,15 +41,23 @@
 
 {% if auth_url %}
 <p class="fw-semibold mb-1">Step 1 — Authorize with Google</p>
-<p class="small text-muted">Click the button below. After granting access, your browser will show a
-  <em>connection refused</em> error — that's expected.</p>
+<p class="small text-muted">Click the button below. Sign in and grant access on Google's page.</p>
 <div class="d-grid mb-3">
   <a href="{{ auth_url }}" target="_blank" class="btn btn-primary">Authorize Google Calendar →</a>
 </div>
 
-<p class="fw-semibold mb-1">Step 2 — Paste the redirect URL</p>
-<p class="small text-muted">Copy the full URL from your browser's address bar (it starts with
-  <code>http://localhost/setup/6/callback?code=</code>) and paste it here.</p>
+<div class="alert alert-warning">
+  <strong>⚠️ You will see an error page — this is normal.</strong><br>
+  After granting access, your browser will redirect to <code>localhost</code> and show
+  a <em>"This site can't be reached"</em> or <em>"Connection refused"</em> error.
+  <strong>Do not close that tab.</strong> The URL in your address bar contains your
+  authorization code.
+</div>
+
+<p class="fw-semibold mb-1">Step 2 — Copy and paste the URL</p>
+<p class="small text-muted">From the error page, copy the <strong>full URL</strong> from your
+  browser's address bar — it starts with <code>http://localhost/setup/6/callback?code=</code>
+  — and paste it below.</p>
 <form method="POST">
   <input type="hidden" name="action" value="complete_oauth">
   <div class="mb-2">
