@@ -11,11 +11,11 @@ def get_events(count: int = 2, tz_str: str = "UTC") -> list:
     except Exception:
         tz = pytz.utc
     today = datetime.now(tz).date()
-    url = f"https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/{today.month}/{today.day}"
+    url = f"https://en.wikipedia.org/api/rest_v1/feed/onthisday/selected/{today.month}/{today.day}"
     try:
         resp = requests.get(url, headers={"User-Agent": "firstlight-digest/1.0"}, timeout=10)
         resp.raise_for_status()
-        events = resp.json().get("events", [])
+        events = resp.json().get("selected", [])
     except Exception:
         return []
 
