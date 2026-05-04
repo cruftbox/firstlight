@@ -11,16 +11,16 @@ def get_events(count: int = 2, tz_str: str = "UTC") -> list:
     except Exception:
         tz = pytz.utc
     today = datetime.now(tz).date()
-    url = f"https://en.wikipedia.org/api/rest_v1/feed/onthisday/selected/{today.month}/{today.day}"
+    url = f"https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/{today.month}/{today.day}"
     try:
         resp = requests.get(url, headers={"User-Agent": "firstlight-digest/1.0"}, timeout=10)
         resp.raise_for_status()
-        events = resp.json().get("selected", [])
+        events = resp.json().get("events", [])
     except Exception:
         return []
 
     # Filter out very recent events (last 5 years) for more interesting history
-    cutoff = today.year - 25
+    cutoff = today.year - 30
     filtered = [e for e in events if e.get("year", 9999) <= cutoff]
     if not filtered:
         filtered = events
