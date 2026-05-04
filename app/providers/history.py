@@ -20,7 +20,7 @@ def get_events(count: int = 2, tz_str: str = "UTC") -> list:
         return []
 
     # Filter out very recent events (last 5 years) for more interesting history
-    cutoff = today.year - 5
+    cutoff = today.year - 25
     filtered = [e for e in events if e.get("year", 9999) <= cutoff]
     if not filtered:
         filtered = events
