@@ -43,9 +43,7 @@ body.digest {
   font-style: italic;
   font-size: 10pt;
   color: #444;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-wrap: break-word;
   margin-bottom: 5px;
 }
 
