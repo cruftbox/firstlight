@@ -188,10 +188,11 @@ For a personal tool accessing your own calendar, **OAuth Client ID is the right 
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) and create or select a project.
 2. **Enable the Calendar API:** APIs & Services → Library → search "Google Calendar API" → Enable.
-3. **Configure the consent screen:** APIs & Services → OAuth consent screen → choose **External** → fill in an app name (anything) → add your Google account email as a **test user** → save.
-4. **Create credentials:** APIs & Services → Credentials → Create Credentials → OAuth client ID → application type: **Web application**.
-5. **Add the redirect URI:** under "Authorized redirect URIs", add exactly: `http://localhost/setup/6/callback`. No port, no server IP — this exact string.
-6. Click **Download JSON** and copy its contents into the setup wizard at step 6.
+3. **Configure the consent screen:** APIs & Services → OAuth consent screen → choose **External** → fill in an app name (anything) → save.
+4. **Publish the app:** on the OAuth consent screen page, change "Publishing status" from **Testing** to **In production**. Ignore the verification warning — Google will not require verification as long as you are the only user. **This step is critical:** apps left in Testing mode have refresh tokens that expire after 7 days, which silently breaks calendar pulls (see [Troubleshooting](#google-calendar-not-showing-events)).
+5. **Create credentials:** APIs & Services → Credentials → Create Credentials → OAuth client ID → application type: **Web application**.
+6. **Add the redirect URI:** under "Authorized redirect URIs", add exactly: `http://localhost/setup/6/callback`. No port, no server IP — this exact string.
+7. Click **Download JSON** and copy its contents into the setup wizard at step 6.
 
 ### How the authorization flow works
 
@@ -209,7 +210,7 @@ The flow depends on where you're running the setup wizard:
 
 Firstlight extracts the authorization code from the pasted URL and exchanges it for a token.
 
-**After authorization:** Firstlight stores the refresh token in `config/google_token.json`. The token renews itself silently each day. You won't need to re-authorize unless you change the credentials file or revoke access via your Google account settings.
+**After authorization:** Firstlight stores the refresh token in `config/google_token.json`. The token renews itself silently each day. You won't need to re-authorize unless you change the credentials file, revoke access via your Google account settings, or the refresh token expires (which only happens if the OAuth consent screen is still in **Testing** mode — see step 4 of the walkthrough above).
 
 Calendar integration remains optional — skip step 6 in the wizard if you don't need it.
 
@@ -481,9 +482,14 @@ Failures in a self-hosted tool are normal. Here's how to diagnose the most commo
 
 ### Google Calendar not showing events
 
-**Symptom:** Calendar section is empty even though authorization succeeded.
+**Symptom:** Calendar section is empty even though authorization succeeded. The wizard at `/setup/6` shows **"✓ Authorized. Calendar is connected and ready."** but no events appear in the digest.
 
-- The OAuth token may have expired. Go to Settings → Setup Wizard → Calendar and re-authorize.
+**Most common cause: OAuth consent screen is still in Testing mode.** Google expires refresh tokens after **7 days** for apps with "Testing" publishing status. The locally stored token file still exists, so the wizard reports "Authorized," but every API call silently fails with `invalid_grant`.
+
+**Fix once and for all:** in [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → OAuth consent screen, change "Publishing status" from **Testing** to **In production**. As long as you are the only user, Google does not require verification. After publishing, re-authorize via Settings → Setup Wizard → Calendar — the new refresh token will not expire.
+
+Other things to check:
+
 - Confirm the calendar IDs in config include the calendar you expect. The wizard auto-discovers them, but if you added a new calendar after setup, re-run the wizard step.
 - Check container logs for `Calendar provider failed` warnings.
 

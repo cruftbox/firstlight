@@ -262,6 +262,13 @@ def calendar_authorize():
     if not creds_path.exists():
         return redirect(url_for("setup.step6") + "?" + urlencode({"error": "Credentials not saved yet"}))
 
+    # Drop any existing token so /setup/6 renders the paste-back form after
+    # Google redirects back. Otherwise token_exist stays True and the wizard
+    # shows "Authorized" with no UI to accept the new authorization code.
+    token_path = Path("/app/config/google_token.json")
+    if token_path.exists():
+        token_path.unlink()
+
     redirect_uri, _ = _oauth_redirect_uri(request)
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
     logging.info("Calendar OAuth authorize — redirect_uri: %s", redirect_uri)
