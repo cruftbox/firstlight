@@ -22,7 +22,7 @@
   </div>
   <div class="col-md-6">
     <div class="card h-100">
-      <div class="card-body">
+      <div class="card-body d-flex flex-column">
         <h5 class="card-title">Quick Links</h5>
         <ul class="list-unstyled mb-0">
           {% if config.tasks.source != 'file' %}
@@ -31,17 +31,20 @@
           <li class="mb-1"><a href="/archive">&#128193; View past digests &rarr;</a></li>
           <li><a href="/settings">&#9881; Settings</a></li>
         </ul>
+        <div class="mt-auto pt-3">
+          <hr class="my-2">
+          <p class="text-muted small mb-0">
+            Firstlight
+            {% if local_version and local_version != 'unknown' %}
+            <code>{{ local_version[:7] }}</code>
+            {% endif %}
+            <span id="versionStatus"></span>
+          </p>
+        </div>
       </div>
     </div>
   </div>
 </div>
-<p class="text-muted small text-center mt-4 mb-0">
-  Firstlight
-  {% if local_version and local_version != 'unknown' %}
-  <code>{{ local_version[:7] }}</code>
-  {% endif %}
-  <span id="versionStatus"></span>
-</p>
 {% endblock %}
 {% block scripts %}
 <script>
