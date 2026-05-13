@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Firstlight{% endblock %}
 {% block content %}
+<div id="updateBanner" class="alert alert-warning py-2 small d-none" role="alert"></div>
 <div class="row g-4">
   <div class="col-md-6">
     <div class="card h-100">
@@ -34,9 +35,32 @@
     </div>
   </div>
 </div>
+<p class="text-muted small text-center mt-4 mb-0">
+  Firstlight
+  {% if local_version and local_version != 'unknown' %}
+  <code>{{ local_version[:7] }}</code>
+  {% endif %}
+  <span id="versionStatus"></span>
+</p>
 {% endblock %}
 {% block scripts %}
 <script>
+fetch('/api/version').then(r => r.json()).then(d => {
+  const status = document.getElementById('versionStatus');
+  const banner = document.getElementById('updateBanner');
+  if (d.up_to_date === true) {
+    status.textContent = ' · up to date';
+  } else if (d.up_to_date === false && d.local && d.remote) {
+    status.innerHTML = ' · <span class="text-warning">update available</span>';
+    banner.innerHTML =
+      '<strong>Update available.</strong> Running <code>' +
+      d.local.substring(0, 7) + '</code>, latest is <code>' +
+      d.remote.substring(0, 7) +
+      '</code>. To update on QNAP: <code>sudo /share/CACHEDEV1_DATA/firstlight/update.sh</code>';
+    banner.classList.remove('d-none');
+  }
+}).catch(() => {});
+
 document.getElementById('printBtn').addEventListener('click', function () {
   const btn = this;
   const status = document.getElementById('printStatus');

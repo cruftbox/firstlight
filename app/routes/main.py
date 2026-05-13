@@ -1,8 +1,14 @@
 from flask import Blueprint, render_template, redirect, url_for, jsonify, Response, request
 from app.config import load as load_config
 import logging
+import os
+import time
 
 main_bp = Blueprint("main", __name__)
+
+_VERSION_CACHE = {"remote": None, "fetched_at": 0.0}
+_VERSION_CACHE_TTL = 3600
+_GITHUB_REPO = "cruftbox/firstlight"
 
 
 @main_bp.route("/")
@@ -13,7 +19,40 @@ def index():
     if job and job.next_run_time:
         next_run = job.next_run_time.strftime("%I:%M %p").lstrip("0") or "12:00 AM"
     cfg = load_config()
-    return render_template("index.html", next_run=next_run, config=cfg)
+    local_version = os.environ.get("FIRSTLIGHT_VERSION", "unknown")
+    return render_template("index.html", next_run=next_run, config=cfg,
+                           local_version=local_version)
+
+
+@main_bp.route("/api/version")
+def api_version():
+    import requests
+    local = os.environ.get("FIRSTLIGHT_VERSION", "unknown")
+    if not local or local == "unknown":
+        return jsonify({"local": local, "remote": None, "up_to_date": None,
+                        "error": "version not baked into image"})
+    now = time.time()
+    remote = _VERSION_CACHE["remote"]
+    if not remote or now - _VERSION_CACHE["fetched_at"] >= _VERSION_CACHE_TTL:
+        try:
+            r = requests.get(
+                f"https://api.github.com/repos/{_GITHUB_REPO}/commits/master",
+                headers={"Accept": "application/vnd.github+json"},
+                timeout=5,
+            )
+            r.raise_for_status()
+            remote = r.json()["sha"]
+            _VERSION_CACHE["remote"] = remote
+            _VERSION_CACHE["fetched_at"] = now
+        except Exception as exc:
+            logging.warning("Version check failed: %s", exc)
+            return jsonify({"local": local, "remote": None, "up_to_date": None,
+                            "error": "could not reach GitHub"})
+    return jsonify({
+        "local": local,
+        "remote": remote,
+        "up_to_date": local == remote,
+    })
 
 
 @main_bp.route("/preview")

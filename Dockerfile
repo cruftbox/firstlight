@@ -22,5 +22,9 @@ COPY tests/ ./tests/
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
+# Placed last so changes to the version don't invalidate prior layers.
+ARG FIRSTLIGHT_VERSION=unknown
+ENV FIRSTLIGHT_VERSION=${FIRSTLIGHT_VERSION}
+
 EXPOSE 5000
 CMD ["/app/start.sh"]
