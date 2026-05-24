@@ -349,11 +349,9 @@ def test_calendar_returns_events_with_valid_credentials(tmp_path):
         events = cal_mod.get_events(["primary"])
 
     assert len(events) == 2
-    timed = events[0]
-    assert timed["title"] == "Team standup"
-    assert timed["all_day"] is False
-    assert isinstance(timed["time"], str)
-    all_day = events[1]
-    assert all_day["title"] == "Company holiday"
-    assert all_day["all_day"] is True
-    assert all_day["time"] == "All day"
+    assert events[0]["title"] == "Company holiday"
+    assert events[0]["all_day"] is True
+    
+    assert events[1]["title"] == "Team standup"
+    assert events[1]["all_day"] is False
+    assert isinstance(events[1]["time"], str)

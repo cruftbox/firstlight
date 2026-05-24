@@ -192,7 +192,7 @@ def test_archive_route_lists_files():
 
     with app.test_client() as client:
         with patch("app.config.load", return_value=MINIMAL_CONFIG):
-            with patch("app.print.archive.list_all", return_value=fake_files):
+            with patch("app.routes.archive.list_all", return_value=fake_files):
                 resp = client.get("/archive")
 
     assert resp.status_code == 200
