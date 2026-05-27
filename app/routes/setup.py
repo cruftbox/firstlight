@@ -281,22 +281,39 @@ def calendar_authorize():
     session["oauth_state"] = state
     session["oauth_redirect_uri"] = redirect_uri
 
-    # Werkzeug's redirect() mangles external https:// URLs in newer versions,
-    # causing the browser to request them as relative paths. Serve an HTML page
-    # that navigates directly instead.
     safe_url = html_mod.escape(auth_url)
     return f"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="1; url={safe_url}">
-<title>Redirecting to Google…</title>
+<title>Re-authorize Google Calendar</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head><body class="bg-light">
-<div class="container py-5" style="max-width:640px;">
-<div class="card shadow-sm"><div class="card-body p-4 text-center">
-<h5 class="mb-3">Redirecting to Google…</h5>
-<p class="text-muted">If you are not redirected automatically:</p>
-<a href="{safe_url}" class="btn btn-primary">Sign in with Google →</a>
+<div class="container py-4" style="max-width:640px;">
+<div class="card shadow-sm"><div class="card-body p-4">
+<h5 class="mb-3">Re-authorize Google Calendar</h5>
+<p class="fw-semibold mb-1">Step 1 — Authorize with Google</p>
+<p class="small text-muted">Click the button below. Sign in and grant access on Google's page.</p>
+<div class="d-grid mb-3">
+  <a href="{safe_url}" target="_blank" class="btn btn-primary">Authorize Google Calendar →</a>
+</div>
+<div class="alert alert-warning small">
+  <strong>⚠️ You will see an error page — this is normal.</strong><br>
+  After granting access, your browser will redirect to <code>localhost</code> and show
+  a <em>"This site can't be reached"</em> error. <strong>Do not close that tab.</strong>
+  Copy the full URL from the address bar.
+</div>
+<p class="fw-semibold mb-1">Step 2 — Paste the URL here</p>
+<p class="small text-muted">Paste the full URL from the error page's address bar below.</p>
+<form method="POST" action="/setup/6">
+  <input type="hidden" name="action" value="complete_oauth">
+  <div class="mb-2">
+    <input type="text" name="redirect_response" class="form-control font-monospace"
+           placeholder="http://localhost/setup/6/callback?code=...&state=..." required>
+  </div>
+  <div class="d-grid">
+    <button type="submit" class="btn btn-success">Complete Authorization →</button>
+  </div>
+</form>
 </div></div></div>
 </body></html>"""
 
