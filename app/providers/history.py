@@ -1,3 +1,4 @@
+import logging
 import random
 import requests
 from datetime import datetime
@@ -16,7 +17,8 @@ def get_events(count: int = 2, tz_str: str = "UTC") -> list:
         resp = requests.get(url, headers={"User-Agent": "firstlight-digest/1.0"}, timeout=10)
         resp.raise_for_status()
         events = resp.json().get("events", [])
-    except Exception:
+    except Exception as e:
+        logging.warning("History fetch failed: %s", e)
         return []
 
     # Filter out very recent events (last 5 years) for more interesting history

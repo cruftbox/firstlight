@@ -1,3 +1,4 @@
+import logging
 import requests
 import time
 from datetime import datetime
@@ -32,7 +33,8 @@ def _get_air_quality(lat: float, lon: float) -> int | None:
         resp.raise_for_status()
         aqi = resp.json().get("current", {}).get("us_aqi")
         return int(aqi) if aqi is not None else None
-    except Exception:
+    except Exception as e:
+        logging.warning("Air quality fetch failed: %s", e)
         return None
 
 
@@ -57,7 +59,8 @@ def geocode(city: str) -> dict | None:
         resp = requests.get(url, params={"name": city, "count": 1, "format": "json"}, timeout=10)
         resp.raise_for_status()
         results = resp.json().get("results", [])
-    except Exception:
+    except Exception as e:
+        logging.warning("Geocoding fetch failed for %r: %s", city, e)
         return None
     if not results:
         return None
@@ -94,7 +97,8 @@ def get_forecast(lat: float, lon: float, units: str = "imperial") -> dict | None
         resp = requests.get("https://api.open-meteo.com/v1/forecast", params=params, timeout=10)
         resp.raise_for_status()
         raw = resp.json()
-    except Exception:
+    except Exception as e:
+        logging.warning("Weather forecast fetch failed: %s", e)
         return stale
 
     current = raw.get("current", {})

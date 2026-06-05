@@ -1,3 +1,4 @@
+import logging
 import requests
 from datetime import datetime
 from threading import Lock
@@ -23,10 +24,12 @@ def get_quote(tz_str: str = "UTC") -> dict | None:
         resp.raise_for_status()
         items = resp.json()
         if not items:
+            logging.warning("Quote provider: empty response from zenquotes.io")
             return None
         item = items[0]
         result = {"text": item["q"], "author": item["a"]}
-    except Exception:
+    except Exception as e:
+        logging.warning("Quote provider failed: %s", e)
         return None
 
     with _cache_lock:

@@ -34,6 +34,7 @@ def render_digest(data: dict, config: dict) -> bytes:
         news=data.get("news", []),
         todos=data.get("todos", []),
         history=data.get("history", []),
+        errors=data.get("errors", []),
     )
 
     # base_url lets WeasyPrint resolve "static/css/digest.css" relative to app/

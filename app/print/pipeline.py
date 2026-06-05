@@ -8,6 +8,8 @@ def collect_data(config: dict) -> dict:
     from app.providers import weather, quote, news, sports, history
     from app.providers import calendar as cal_provider
 
+    errors = []
+
     loc = config["location"]
     weather_data = None
     if loc.get("lat"):
@@ -15,6 +17,8 @@ def collect_data(config: dict) -> dict:
             weather_data = weather.get_forecast(loc["lat"], loc["lon"], config["weather"]["units"])
         except Exception as e:
             logging.warning("Weather provider failed: %s", e)
+        if weather_data is None:
+            errors.append("Weather unavailable")
 
     tz_str = config["firstlight"]["timezone"]
     quote_data = None
@@ -23,6 +27,8 @@ def collect_data(config: dict) -> dict:
             quote_data = quote.get_quote(tz_str)
         except Exception as e:
             logging.warning("Quote provider failed: %s", e)
+        if quote_data is None:
+            errors.append("Quote of the day unavailable")
 
     calendar_data = []
     calendar_tomorrow = []
@@ -32,12 +38,14 @@ def collect_data(config: dict) -> dict:
             calendar_tomorrow = cal_provider.get_events(config["calendar"]["calendar_ids"], day_offset=1, timezone_str=tz_str)
         except Exception as e:
             logging.warning("Calendar provider failed: %s", e)
+            errors.append("Calendar unavailable")
 
     try:
         sports_data = sports.get_scores(config["sports"], config["firstlight"]["timezone"])
     except Exception as e:
         logging.warning("Sports provider failed: %s", e)
         sports_data = []
+        errors.append("Sports scores unavailable")
 
     try:
         news_data = news.get_news(
@@ -48,6 +56,7 @@ def collect_data(config: dict) -> dict:
     except Exception as e:
         logging.warning("News provider failed: %s", e)
         news_data = []
+        errors.append("News unavailable")
 
     history_data = []
     if config.get("history", {}).get("enabled", True):
@@ -55,6 +64,7 @@ def collect_data(config: dict) -> dict:
             history_data = history.get_events(tz_str=tz_str)
         except Exception as e:
             logging.warning("History provider failed: %s", e)
+            errors.append("On This Day unavailable")
 
     return {
         "weather": weather_data,
@@ -65,6 +75,7 @@ def collect_data(config: dict) -> dict:
         "news": news_data,
         "todos": _load_todos(config),
         "history": history_data,
+        "errors": errors,
     }
 
 

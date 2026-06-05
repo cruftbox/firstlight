@@ -99,5 +99,14 @@
   </section>
   {% endif %}
 
+  {% if errors %}
+  <section class="errors-section">
+    <div class="errors-label">&#9888; FETCH ERRORS</div>
+    {% for error in errors %}
+    <div class="error-item">{{ error }}</div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
 </body>
 </html>
