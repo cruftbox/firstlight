@@ -1,5 +1,6 @@
 import requests
 import logging
+from app.providers.utils import get_with_retry
 import pytz
 from datetime import datetime, timezone, timedelta
 
@@ -57,11 +58,10 @@ def get_scores(sports_config: dict, timezone_str: str = "America/Los_Angeles") -
 
 def _fetch_events(endpoint: str, date_str: str) -> list:
     try:
-        resp = requests.get(endpoint, params={"dates": date_str}, timeout=10)
-        resp.raise_for_status()
+        resp = get_with_retry(endpoint, params={"dates": date_str}, timeout=10)
         return resp.json().get("events", [])
-    except Exception:
-        logging.warning("Sports fetch failed for %s on %s", endpoint, date_str)
+    except Exception as e:
+        logging.warning("Sports fetch failed for %s on %s: %s", endpoint, date_str, e)
         return []
 
 

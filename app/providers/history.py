@@ -3,6 +3,7 @@ import random
 import requests
 from datetime import datetime
 import pytz
+from app.providers.utils import get_with_retry
 
 
 def get_events(count: int = 2, tz_str: str = "UTC") -> list:
@@ -14,8 +15,7 @@ def get_events(count: int = 2, tz_str: str = "UTC") -> list:
     today = datetime.now(tz).date()
     url = f"https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/{today.month}/{today.day}"
     try:
-        resp = requests.get(url, headers={"User-Agent": "firstlight-digest/1.0"}, timeout=10)
-        resp.raise_for_status()
+        resp = get_with_retry(url, headers={"User-Agent": "firstlight-digest/1.0"}, timeout=10)
         events = resp.json().get("events", [])
     except Exception as e:
         logging.warning("History fetch failed: %s", e)

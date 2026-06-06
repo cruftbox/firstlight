@@ -3,6 +3,7 @@ import requests
 from datetime import datetime
 from threading import Lock
 import pytz
+from app.providers.utils import get_with_retry
 
 _cache: dict = {"date": None, "data": None}
 _cache_lock = Lock()
@@ -20,8 +21,7 @@ def get_quote(tz_str: str = "UTC") -> dict | None:
             return _cache["data"]
 
     try:
-        resp = requests.get("https://zenquotes.io/api/today", timeout=10)
-        resp.raise_for_status()
+        resp = get_with_retry("https://zenquotes.io/api/today", timeout=10)
         items = resp.json()
         if not items:
             logging.warning("Quote provider: empty response from zenquotes.io")

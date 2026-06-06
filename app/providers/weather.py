@@ -1,6 +1,7 @@
 import logging
 import requests
 import time
+from app.providers.utils import get_with_retry
 from datetime import datetime
 from threading import Lock
 
@@ -25,12 +26,11 @@ WMO_CODES = {
 
 def _get_air_quality(lat: float, lon: float) -> int | None:
     try:
-        resp = requests.get(
+        resp = get_with_retry(
             "https://air-quality-api.open-meteo.com/v1/air-quality",
             params={"latitude": lat, "longitude": lon, "current": "us_aqi"},
             timeout=10,
         )
-        resp.raise_for_status()
         aqi = resp.json().get("current", {}).get("us_aqi")
         return int(aqi) if aqi is not None else None
     except Exception as e:
@@ -56,8 +56,7 @@ def geocode(city: str) -> dict | None:
     """Returns {"name", "lat", "lon", "country"} or None if not found."""
     url = "https://geocoding-api.open-meteo.com/v1/search"
     try:
-        resp = requests.get(url, params={"name": city, "count": 1, "format": "json"}, timeout=10)
-        resp.raise_for_status()
+        resp = get_with_retry(url, params={"name": city, "count": 1, "format": "json"}, timeout=10)
         results = resp.json().get("results", [])
     except Exception as e:
         logging.warning("Geocoding fetch failed for %r: %s", city, e)
@@ -94,8 +93,7 @@ def get_forecast(lat: float, lon: float, units: str = "imperial") -> dict | None
         "forecast_days": 4,
     }
     try:
-        resp = requests.get("https://api.open-meteo.com/v1/forecast", params=params, timeout=10)
-        resp.raise_for_status()
+        resp = get_with_retry("https://api.open-meteo.com/v1/forecast", params=params, timeout=10)
         raw = resp.json()
     except Exception as e:
         logging.warning("Weather forecast fetch failed: %s", e)
