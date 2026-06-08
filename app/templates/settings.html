@@ -3,6 +3,11 @@
 {% block content %}
 <h2 class="mb-4">Settings</h2>
 
+<p class="text-muted small mb-3">
+  Build: {% if local_version and local_version != 'unknown' %}<code>{{ local_version[:7] }}</code>{% else %}<em>unknown</em>{% endif %}
+  <span id="settingsVersionStatus"></span>
+</p>
+
 {% if saved %}
 <div class="alert alert-success">Settings saved.</div>
 {% endif %}
@@ -212,5 +217,15 @@
       document.getElementById('settingsApiFieldsRow').style.display = this.value === 'api' ? '' : 'none';
     });
   });
+</script>
+<script>
+fetch('/api/version').then(r => r.json()).then(d => {
+  const el = document.getElementById('settingsVersionStatus');
+  if (d.up_to_date === true) {
+    el.innerHTML = ' &middot; <span class="text-success">up to date</span>';
+  } else if (d.up_to_date === false && d.local && d.remote) {
+    el.innerHTML = ' &middot; <span class="text-warning">update available (latest: <code>' + d.remote.substring(0, 7) + '</code>)</span>';
+  }
+}).catch(() => {});
 </script>
 {% endblock %}

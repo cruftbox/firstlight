@@ -378,6 +378,7 @@ def step7():
         for league in ["mlb", "nfl", "nba", "nhl", "wnba", "nwsl", "mls", "premier_league"]:
             raw = request.form.get(league, "").strip()
             cfg["sports"][league] = [t.strip() for t in raw.split(",") if t.strip()]
+        cfg["world_cup"]["enabled"] = request.form.get("world_cup_enabled") == "on"
         save_config(cfg)
         return redirect(url_for("setup.step8"))
     return render_template("setup/step7_sports.html", config=cfg)

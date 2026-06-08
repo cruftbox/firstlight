@@ -23,6 +23,15 @@
            value="{{ config.sports[key] | join(', ') }}">
   </div>
   {% endfor %}
+  <hr class="my-3">
+  <div class="mb-3">
+    <label class="form-label fw-semibold">FIFA World Cup 2026</label>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" name="world_cup_enabled"
+             id="worldCupCheck" {% if config.world_cup.enabled %}checked{% endif %}>
+      <label class="form-check-label" for="worldCupCheck">Show World Cup scores (yesterday, today, tomorrow)</label>
+    </div>
+  </div>
   <button type="submit" class="btn btn-primary w-100 mt-2">Continue →</button>
 </form>
 {% endblock %}

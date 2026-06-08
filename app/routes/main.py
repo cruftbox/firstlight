@@ -128,5 +128,7 @@ def settings():
     saved = request.args.get("saved") == "1"
     printers = get_printers()
     timezones = pytz.all_timezones
+    local_version = os.environ.get("FIRSTLIGHT_VERSION", "unknown")
     return render_template("settings.html", config=cfg, printers=printers,
-                           timezones=timezones, saved=saved)
+                           timezones=timezones, saved=saved,
+                           local_version=local_version)
