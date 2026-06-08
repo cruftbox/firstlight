@@ -100,6 +100,7 @@ def settings():
         cfg["history"]["enabled"] = request.form.get("history_enabled") == "on"
         cfg["weather"]["show_aqi"] = request.form.get("show_aqi") == "on"
         cfg["weather"]["show_rain_forecast"] = request.form.get("show_rain_forecast") == "on"
+        cfg["world_cup"]["enabled"] = request.form.get("world_cup_enabled") == "on"
         cfg["tasks"]["source"] = request.form.get("tasks_source", "builtin")
         tasks_file_path = request.form.get("tasks_file_path", "").strip()
         if tasks_file_path:

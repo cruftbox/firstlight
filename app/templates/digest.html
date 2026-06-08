@@ -1,112 +1,124 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Firstlight — {{ date_str }}</title>
-  <link rel="stylesheet" href="static/css/digest.css">
-</head>
-<body class="digest {{ 'a4' if config.firstlight.paper_size == 'a4' else 'letter' }}">
-
-  <header>
-    <div class="header-bar">
-      <span class="title">FIRSTLIGHT</span>
-      <span class="date-str">{{ date_str }}</span>
-    </div>
-  </header>
-
-  <section class="weather-section">
-    {% if weather %}
-    <div class="weather-main">
-      {{ config.location.city }}&nbsp;&nbsp;&nbsp;
-      Currently {{ weather.temp }}°&nbsp;&nbsp;&nbsp;
-      High {{ weather.high }}° / Low {{ weather.low }}°&nbsp;&nbsp;&nbsp;
-      {{ weather.condition }}
-    </div>
-    <div class="weather-meta">
-      {% if weather.sunrise %}Sunrise {{ weather.sunrise }} &nbsp;·&nbsp; Sunset {{ weather.sunset }}{% endif %}
-      {% if weather.aqi is not none and config.weather.show_aqi %} &nbsp;·&nbsp; AQI {{ weather.aqi }} — {{ weather.aqi_label }}{% endif %}
-      {% if weather.wind %} &nbsp;·&nbsp; Wind {{ weather.wind }}{{ ' mph' if config.weather.units == 'imperial' else ' km/h' }}{% endif %}
-    </div>
-    {% if weather.rain_days and config.weather.show_rain_forecast %}
-    <div class="rain-alert">&#127783; Rain expected: {{ weather.rain_days | join(', ') }}</div>
-    {% endif %}
-    {% endif %}
-  </section>
-
-  {% if quote %}
-  <div class="quote-line">"{{ quote.text }}" — {{ quote.author }}</div>
-  {% endif %}
-
-  {% if history %}
-  <section class="history-section">
-    <div class="history-label">ON THIS DAY</div>
-    {% for event in history %}
-    <div class="history-item"><span class="history-year">{{ event.year }}</span> — {{ event.text }}</div>
-    {% endfor %}
-  </section>
-  {% endif %}
-
-  <div class="two-col">
-    <section class="calendar-section">
-      <h2>CALENDAR TODAY</h2>
-      {% for event in calendar %}
-      <div class="cal-event">
-        <span class="cal-time">{{ event.time }}</span>
-        <span class="cal-title">{{ event.title }}</span>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Firstlight — {{ date_str }}</title>
+    <link rel="stylesheet" href="static/css/digest.css" />
+  </head>
+  <body
+    class="digest {{ 'a4' if config.firstlight.paper_size == 'a4' else 'letter' }}"
+  >
+    <header>
+      <div class="header-bar">
+        <span class="title">FIRSTLIGHT</span>
+        <span class="date-str">{{ date_str }}</span>
       </div>
-      {% else %}
-      <div class="empty">No events today</div>
-      {% endfor %}
-      {% if calendar_tomorrow %}
-      <h2 class="calendar-tomorrow-heading">TOMORROW</h2>
-      {% for event in calendar_tomorrow %}
-      <div class="cal-event">
-        <span class="cal-time">{{ event.time }}</span>
-        <span class="cal-title">{{ event.title }}</span>
+    </header>
+
+    <section class="weather-section">
+      {% if weather %}
+      <div class="weather-main">
+        {{ config.location.city }}&nbsp;&nbsp;&nbsp; Currently {{ weather.temp
+        }}°&nbsp;&nbsp;&nbsp; High {{ weather.high }}° / Low {{ weather.low
+        }}°&nbsp;&nbsp;&nbsp; {{ weather.condition }}
+      </div>
+      <div class="weather-meta">
+        {% if weather.sunrise %}Sunrise {{ weather.sunrise }} &nbsp;·&nbsp;
+        Sunset {{ weather.sunset }}{% endif %} {% if weather.aqi is not none and
+        config.weather.show_aqi %} &nbsp;·&nbsp; AQI {{ weather.aqi }} — {{
+        weather.aqi_label }}{% endif %} {% if weather.wind %} &nbsp;·&nbsp; Wind
+        {{ weather.wind }}{{ ' mph' if config.weather.units == 'imperial' else '
+        km/h' }}{% endif %}
+      </div>
+      {% if weather.rain_days and config.weather.show_rain_forecast %}
+      <div class="rain-alert">
+        &#127783; Rain expected: {{ weather.rain_days | join(', ') }}
+      </div>
+      {% endif %} {% endif %}
+    </section>
+
+    {% if quote %}
+    <div class="quote-line">"{{ quote.text }}" — {{ quote.author }}</div>
+    {% endif %} {% if history %}
+    <section class="history-section">
+      <div class="history-label">ON THIS DAY</div>
+      {% for event in history %}
+      <div class="history-item">
+        <span class="history-year">{{ event.year }}</span> — {{ event.text }}
       </div>
       {% endfor %}
+    </section>
+    {% endif %}
+
+    <div class="two-col">
+      <section class="calendar-section">
+        <h2>CALENDAR TODAY</h2>
+        {% for event in calendar %}
+        <div class="cal-event">
+          <span class="cal-time">{{ event.time }}</span>
+          <span class="cal-title">{{ event.title }}</span>
+        </div>
+        {% else %}
+        <div class="empty">No events today</div>
+        {% endfor %} {% if calendar_tomorrow %}
+        <h2 class="calendar-tomorrow-heading">TOMORROW</h2>
+        {% for event in calendar_tomorrow %}
+        <div class="cal-event">
+          <span class="cal-time">{{ event.time }}</span>
+          <span class="cal-title">{{ event.title }}</span>
+        </div>
+        {% endfor %} {% endif %}
+      </section>
+
+      {% if todos %}
+      <section class="todo-section">
+        <h2>TO-DO</h2>
+        {% for item in todos %}
+        <div class="todo-item">☐ {{ item }}</div>
+        {% endfor %}
+      </section>
       {% endif %}
-    </section>
+    </div>
 
-    {% if todos %}
-    <section class="todo-section">
-      <h2>TO-DO</h2>
-      {% for item in todos %}
-      <div class="todo-item">☐ {{ item }}</div>
+    {% if sports %}
+    <section class="sports-section">
+      <h2>SPORTS</h2>
+      {% for score in sports %}
+      <div class="score-item">{{ score.emoji }} {{ score.text }}</div>
+      {% endfor %}
+    </section>
+    {% endif %} {% if news %}
+    <section class="news-section">
+      <h2>NEWS</h2>
+      {% for item in news %}
+      <div class="news-item">
+        • {{ item.title }} {% if item.label %}<span class="news-label"
+          >[{{ item.label }}]</span
+        >{% endif %}
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %} {% if world_cup %}
+    <section class="world-cup-section">
+      <h2>&#127942; FIFA WORLD CUP</h2>
+      {% set ns = namespace(current_label=None) %} {% for match in world_cup %}
+      {% if match.label != ns.current_label %} {% set ns.current_label =
+      match.label %}
+      <div class="wc-day-label">
+        {{ match.label }}{% if match.round %} &nbsp;·&nbsp;
+        <span class="wc-round">{{ match.round }}</span>{% endif %}
+      </div>
+      {% endif %}
+      <div class="wc-match">{{ match.text }}</div>
+      {% endfor %}
+    </section>
+    {% endif %} {% if errors %}
+    <section class="errors-section">
+      <div class="errors-label">&#9888; FETCH ERRORS</div>
+      {% for error in errors %}
+      <div class="error-item">{{ error }}</div>
       {% endfor %}
     </section>
     {% endif %}
-  </div>
-
-  {% if sports %}
-  <section class="sports-section">
-    <h2>SPORTS</h2>
-    {% for score in sports %}
-    <div class="score-item">{{ score.emoji }} {{ score.text }}</div>
-    {% endfor %}
-  </section>
-  {% endif %}
-
-  {% if news %}
-  <section class="news-section">
-    <h2>NEWS</h2>
-    {% for item in news %}
-    <div class="news-item">
-      • {{ item.title }}
-      {% if item.label %}<span class="news-label">[{{ item.label }}]</span>{% endif %}
-    </div>
-    {% endfor %}
-  </section>
-  {% endif %}
-
-  {% if errors %}
-  <section class="errors-section">
-    <div class="errors-label">&#9888; FETCH ERRORS</div>
-    {% for error in errors %}
-    <div class="error-item">{{ error }}</div>
-    {% endfor %}
-  </section>
-  {% endif %}
-
-</body>
+  </body>
 </html>

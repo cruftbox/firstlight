@@ -6,6 +6,7 @@ import json
 def collect_data(config: dict) -> dict:
     """Collect data from all providers. Each provider fails gracefully to empty/None."""
     from app.providers import weather, quote, news, sports, history
+    from app.providers.sports import get_world_cup
     from app.providers import calendar as cal_provider
 
     errors = []
@@ -66,6 +67,14 @@ def collect_data(config: dict) -> dict:
             logging.warning("History provider failed: %s", e)
             errors.append("On This Day unavailable")
 
+    world_cup_data = []
+    if config.get("world_cup", {}).get("enabled", False):
+        try:
+            world_cup_data = get_world_cup(tz_str)
+        except Exception as e:
+            logging.warning("World Cup provider failed: %s", e)
+            errors.append("World Cup scores unavailable")
+
     return {
         "weather": weather_data,
         "quote": quote_data,
@@ -75,6 +84,7 @@ def collect_data(config: dict) -> dict:
         "news": news_data,
         "todos": _load_todos(config),
         "history": history_data,
+        "world_cup": world_cup_data,
         "errors": errors,
     }
 

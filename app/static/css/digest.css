@@ -13,7 +13,7 @@ body.a4 {
 }
 
 body.digest {
-  font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
+  font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
   font-size: 11pt;
   line-height: 1.45;
   color: #000;
@@ -187,6 +187,39 @@ h2 {
   font-size: 10pt;
 }
 
+/* ── World Cup ── */
+.world-cup-section {
+  margin-bottom: 12px;
+  border-top: 1px solid #ccc;
+  padding-top: 8px;
+}
+
+.wc-day-label {
+  font-weight: bold;
+  font-size: 9pt;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #555;
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+
+.wc-day-label:first-child {
+  margin-top: 0;
+}
+
+.wc-round {
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.wc-match {
+  font-size: 10.5pt;
+  margin-bottom: 3px;
+  padding-left: 10px;
+}
+
 /* ── Fetch Errors ── */
 .errors-section {
   border-top: 1px solid #ccc;
@@ -208,4 +241,3 @@ h2 {
   color: #a00;
   margin-bottom: 2px;
 }
-

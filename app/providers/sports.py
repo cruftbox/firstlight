@@ -15,6 +15,8 @@ ENDPOINTS = {
     "premier_league": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard",
 }
 
+WORLD_CUP_ENDPOINT = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+
 SPORT_EMOJIS = {
     "mlb": "⚾", "nfl": "🏈", "nba": "🏀", "nhl": "🏒",
     "wnba": "🏀", "nwsl": "⚽", "mls": "⚽", "premier_league": "⚽",
@@ -63,6 +65,68 @@ def _fetch_events(endpoint: str, date_str: str) -> list:
     except Exception as e:
         logging.warning("Sports fetch failed for %s on %s: %s", endpoint, date_str, e)
         return []
+
+
+def get_world_cup(timezone_str: str = "America/Los_Angeles") -> list:
+    """Returns World Cup matches for yesterday (scores), today, and tomorrow (kickoffs).
+    Returns empty list if no matches exist or endpoint is unavailable."""
+    try:
+        local_tz = pytz.timezone(timezone_str)
+    except Exception:
+        local_tz = pytz.utc
+
+    now = datetime.now(local_tz)
+    dates = {
+        "Yesterday": (now - timedelta(days=1)).strftime("%Y%m%d"),
+        "Today":     now.strftime("%Y%m%d"),
+        "Tomorrow":  (now + timedelta(days=1)).strftime("%Y%m%d"),
+    }
+
+    results = []
+    for label, date_str in dates.items():
+        events = _fetch_events(WORLD_CUP_ENDPOINT, date_str)
+        for event in events:
+            row = _format_wc_event(event, local_tz, label)
+            if row:
+                results.append(row)
+    return results
+
+
+def _format_wc_event(event: dict, local_tz, label: str) -> dict | None:
+    competition = event.get("competitions", [{}])[0]
+    competitors = competition.get("competitors", [])
+    if len(competitors) < 2:
+        return None
+
+    home = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
+    away = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
+    home_name = home.get("team", {}).get("displayName") or home.get("team", {}).get("name", "?")
+    away_name = away.get("team", {}).get("displayName") or away.get("team", {}).get("name", "?")
+
+    status = event.get("status", {}).get("type", {})
+    completed = status.get("completed", False)
+    in_progress = not completed and status.get("state", "") == "in"
+
+    if completed:
+        text = f"{away_name} {away.get('score', '?')} – {home.get('score', '?')} {home_name}  Final"
+    elif in_progress:
+        clock = event.get("status", {}).get("displayClock", "")
+        period = event.get("status", {}).get("period", "")
+        period_str = f" ({period}')" if period else (f" ({clock})" if clock else "")
+        text = f"{away_name} {away.get('score', '0')} – {home.get('score', '0')} {home_name}{period_str}"
+    else:
+        event_date = event.get("date", "")
+        if event_date:
+            dt_utc = datetime.fromisoformat(event_date.replace("Z", "+00:00"))
+            dt_local = dt_utc.astimezone(local_tz)
+            time_str = dt_local.strftime("%I:%M %p").lstrip("0") or "12:00 AM"
+            text = f"{away_name} vs {home_name}  {time_str}"
+        else:
+            text = f"{away_name} vs {home_name}"
+
+    round_name = competition.get("notes", [{}])[0].get("headline", "") if competition.get("notes") else ""
+
+    return {"label": label, "text": text, "round": round_name}
 
 
 def _format_event(event: dict, teams: list, local_tz, label: str | None) -> str | None:
