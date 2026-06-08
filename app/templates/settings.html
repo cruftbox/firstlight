@@ -1,4 +1,5 @@
-{% extends "base.html" %} {% block title %}Settings — Firstlight{% endblock %}
+{% extends "base.html" %}
+{% block title %}Settings — Firstlight{% endblock %}
 {% block content %}
 <h2 class="mb-4">Settings</h2>
 
@@ -7,6 +8,7 @@
 {% endif %}
 
 <form method="POST">
+
   <div class="card mb-4">
     <div class="card-header fw-bold">General</div>
     <div class="card-body">
@@ -14,159 +16,57 @@
         <div class="col-md-4">
           <label class="form-label">Paper size</label>
           <select name="paper_size" class="form-select">
-            <option
-              value="letter"
-              {%
-              if
-              config.firstlight.paper_size=""
-              ="letter"
-              %}selected{%
-              endif
-              %}
-            >
-              Letter
-            </option>
-            <option
-              value="a4"
-              {%
-              if
-              config.firstlight.paper_size=""
-              ="a4"
-              %}selected{%
-              endif
-              %}
-            >
-              A4
-            </option>
+            <option value="letter" {% if config.firstlight.paper_size == 'letter' %}selected{% endif %}>Letter</option>
+            <option value="a4" {% if config.firstlight.paper_size == 'a4' %}selected{% endif %}>A4</option>
           </select>
         </div>
         <div class="col-md-4">
           <label class="form-label">Print time</label>
-          <input
-            type="time"
-            name="print_time"
-            class="form-control"
-            step="900"
-            value="{{ config.firstlight.print_time }}"
-          />
+          <input type="time" name="print_time" class="form-control"
+                 step="900" value="{{ config.firstlight.print_time }}">
         </div>
         <div class="col-md-4">
           <label class="form-label">Timezone</label>
           <select name="timezone" class="form-select">
             {% for tz in timezones %}
-            <option
-              value="{{ tz }}"
-              {%
-              if
-              tz=""
-              ="config.firstlight.timezone"
-              %}selected{%
-              endif
-              %}
-            >
-              {{ tz }}
-            </option>
+            <option value="{{ tz }}" {% if tz == config.firstlight.timezone %}selected{% endif %}>{{ tz }}</option>
             {% endfor %}
           </select>
         </div>
         <div class="col-md-4">
           <label class="form-label">Printer IP address</label>
-          <input
-            type="text"
-            name="printer_ip"
-            class="form-control"
-            placeholder="e.g. 192.168.4.50"
-            value="{{ config.firstlight.printer_ip }}"
-          />
+          <input type="text" name="printer_ip" class="form-control"
+                 placeholder="e.g. 192.168.4.50"
+                 value="{{ config.firstlight.printer_ip }}">
           <div class="form-text">Leave blank to disable printing.</div>
         </div>
         <div class="col-12">
           <label class="form-label fw-semibold">Optional content</label>
           <div class="d-flex flex-wrap gap-3">
             <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                name="quote_enabled"
-                id="quoteCheck"
-                {%
-                if
-                config.quote.enabled
-                %}checked{%
-                endif
-                %}
-              />
-              <label class="form-check-label" for="quoteCheck"
-                >Quote of the day</label
-              >
+              <input class="form-check-input" type="checkbox" name="quote_enabled"
+                     id="quoteCheck" {% if config.quote.enabled %}checked{% endif %}>
+              <label class="form-check-label" for="quoteCheck">Quote of the day</label>
             </div>
             <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                name="history_enabled"
-                id="historyCheck"
-                {%
-                if
-                config.history.enabled
-                %}checked{%
-                endif
-                %}
-              />
-              <label class="form-check-label" for="historyCheck"
-                >On this day in history</label
-              >
+              <input class="form-check-input" type="checkbox" name="history_enabled"
+                     id="historyCheck" {% if config.history.enabled %}checked{% endif %}>
+              <label class="form-check-label" for="historyCheck">On this day in history</label>
             </div>
             <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                name="show_aqi"
-                id="aqiCheck"
-                {%
-                if
-                config.weather.show_aqi
-                %}checked{%
-                endif
-                %}
-              />
-              <label class="form-check-label" for="aqiCheck"
-                >Air quality index</label
-              >
+              <input class="form-check-input" type="checkbox" name="show_aqi"
+                     id="aqiCheck" {% if config.weather.show_aqi %}checked{% endif %}>
+              <label class="form-check-label" for="aqiCheck">Air quality index</label>
             </div>
             <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                name="show_rain_forecast"
-                id="rainCheck"
-                {%
-                if
-                config.weather.show_rain_forecast
-                %}checked{%
-                endif
-                %}
-              />
-              <label class="form-check-label" for="rainCheck"
-                >Rain forecast alert</label
-              >
+              <input class="form-check-input" type="checkbox" name="show_rain_forecast"
+                     id="rainCheck" {% if config.weather.show_rain_forecast %}checked{% endif %}>
+              <label class="form-check-label" for="rainCheck">Rain forecast alert</label>
             </div>
             <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                name="world_cup_enabled"
-                id="worldCupCheck"
-                {%
-                if
-                config.world_cup.enabled
-                %}checked{%
-                endif
-                %}
-              />
-              <label class="form-check-label" for="worldCupCheck"
-                >FIFA World Cup scores</label
-              >
+              <input class="form-check-input" type="checkbox" name="world_cup_enabled"
+                     id="worldCupCheck" {% if config.world_cup.enabled %}checked{% endif %}>
+              <label class="form-check-label" for="worldCupCheck">FIFA World Cup scores</label>
             </div>
           </div>
         </div>
@@ -180,141 +80,43 @@
       <div class="mb-3">
         <label class="form-label fw-semibold">Source</label>
         <div class="form-check">
-          <input
-            class="form-check-input"
-            type="radio"
-            name="tasks_source"
-            id="settingsSourceBuiltin"
-            value="builtin"
-            {%
-            if
-            config.tasks.source
-            !="file"
-            %}checked{%
-            endif
-            %}
-          />
-          <label class="form-check-label" for="settingsSourceBuiltin"
-            >Built-in list
-            <span class="text-muted small"
-              >(managed at <a href="/todo">/todo</a>)</span
-            ></label
-          >
+          <input class="form-check-input" type="radio" name="tasks_source" id="settingsSourceBuiltin"
+                 value="builtin" {% if config.tasks.source != 'file' %}checked{% endif %}>
+          <label class="form-check-label" for="settingsSourceBuiltin">Built-in list <span class="text-muted small">(managed at <a href="/todo">/todo</a>)</span></label>
         </div>
         <div class="form-check">
-          <input
-            class="form-check-input"
-            type="radio"
-            name="tasks_source"
-            id="settingsSourceFile"
-            value="file"
-            {%
-            if
-            config.tasks.source=""
-            ="file"
-            %}checked{%
-            endif
-            %}
-          />
-          <label class="form-check-label" for="settingsSourceFile"
-            >Plain text file
-            <span class="text-muted small"
-              >(e.g. synced via Syncthing)</span
-            ></label
-          >
+          <input class="form-check-input" type="radio" name="tasks_source" id="settingsSourceFile"
+                 value="file" {% if config.tasks.source == 'file' %}checked{% endif %}>
+          <label class="form-check-label" for="settingsSourceFile">Plain text file <span class="text-muted small">(e.g. synced via Syncthing)</span></label>
         </div>
         <div class="form-check">
-          <input
-            class="form-check-input"
-            type="radio"
-            name="tasks_source"
-            id="settingsSourceApi"
-            value="api"
-            {%
-            if
-            config.tasks.source=""
-            ="api"
-            %}checked{%
-            endif
-            %}
-          />
-          <label class="form-check-label" for="settingsSourceApi"
-            >External API
-            <span class="text-muted small"
-              >(REST service with JSON response)</span
-            ></label
-          >
+          <input class="form-check-input" type="radio" name="tasks_source" id="settingsSourceApi"
+                 value="api" {% if config.tasks.source == 'api' %}checked{% endif %}>
+          <label class="form-check-label" for="settingsSourceApi">External API <span class="text-muted small">(REST service with JSON response)</span></label>
         </div>
       </div>
-      <div
-        id="settingsFilePathRow"
-        {%
-        if
-        config.tasks.source
-        !="file"
-        %}style="display:none"
-        {%
-        endif
-        %}
-      >
+      <div id="settingsFilePathRow" {% if config.tasks.source != 'file' %}style="display:none"{% endif %}>
         <label class="form-label">File path inside the container</label>
-        <input
-          type="text"
-          name="tasks_file_path"
-          class="form-control"
-          value="{{ config.tasks.file_path }}"
-          placeholder="/tasks/tasks.txt"
-        />
-        <div class="form-text">
-          Mount the host folder in <code>docker-compose.yml</code> as a
-          read-only volume.
-        </div>
+        <input type="text" name="tasks_file_path" class="form-control"
+               value="{{ config.tasks.file_path }}" placeholder="/tasks/tasks.txt">
+        <div class="form-text">Mount the host folder in <code>docker-compose.yml</code> as a read-only volume.</div>
       </div>
-      <div
-        id="settingsApiFieldsRow"
-        {%
-        if
-        config.tasks.source
-        !="api"
-        %}style="display:none"
-        {%
-        endif
-        %}
-      >
+      <div id="settingsApiFieldsRow" {% if config.tasks.source != 'api' %}style="display:none"{% endif %}>
         <div class="row g-3 mt-0">
           <div class="col-12">
             <label class="form-label">API URL</label>
-            <input
-              type="text"
-              name="tasks_api_url"
-              class="form-control"
-              value="{{ config.tasks.api_url }}"
-              placeholder="https://api.example.com/tasks"
-            />
+            <input type="text" name="tasks_api_url" class="form-control"
+                   value="{{ config.tasks.api_url }}" placeholder="https://api.example.com/tasks">
           </div>
           <div class="col-md-6">
             <label class="form-label">API key / bearer token</label>
-            <input
-              type="password"
-              name="tasks_api_key"
-              class="form-control"
-              placeholder="Leave blank to keep current"
-            />
+            <input type="password" name="tasks_api_key" class="form-control"
+                   placeholder="Leave blank to keep current">
           </div>
           <div class="col-md-6">
-            <label class="form-label"
-              >Filter
-              <span class="text-muted small"
-                >(project, label, or tag — optional)</span
-              ></label
-            >
-            <input
-              type="text"
-              name="tasks_api_filter"
-              class="form-control"
-              value="{{ config.tasks.api_filter }}"
-              placeholder="e.g. Inbox"
-            />
+            <label class="form-label">Filter <span class="text-muted small">(project, label, or tag — optional)</span></label>
+            <input type="text" name="tasks_api_filter" class="form-control"
+                   value="{{ config.tasks.api_filter }}" placeholder="e.g. Inbox">
           </div>
         </div>
       </div>
@@ -325,32 +127,14 @@
     <div class="card-header fw-bold">Archive</div>
     <div class="card-body">
       <div class="form-check form-switch mb-3">
-        <input
-          class="form-check-input"
-          type="checkbox"
-          name="archive_enabled"
-          id="archiveCheck"
-          {%
-          if
-          config.archive.enabled
-          %}checked{%
-          endif
-          %}
-        />
-        <label class="form-check-label" for="archiveCheck"
-          >Enable PDF archive</label
-        >
+        <input class="form-check-input" type="checkbox" name="archive_enabled"
+               id="archiveCheck" {% if config.archive.enabled %}checked{% endif %}>
+        <label class="form-check-label" for="archiveCheck">Enable PDF archive</label>
       </div>
       <div class="col-md-4">
         <label class="form-label">Retention (days)</label>
-        <input
-          type="number"
-          name="retention_days"
-          class="form-control"
-          value="{{ config.archive.retention_days }}"
-          min="1"
-          max="365"
-        />
+        <input type="number" name="retention_days" class="form-control"
+               value="{{ config.archive.retention_days }}" min="1" max="365">
       </div>
     </div>
   </div>
@@ -359,76 +143,40 @@
     <div class="card-header fw-bold">Email Delivery</div>
     <div class="card-body">
       <div class="form-check form-switch mb-3">
-        <input
-          class="form-check-input"
-          type="checkbox"
-          name="email_enabled"
-          id="emailCheck"
-          {%
-          if
-          config.email.enabled
-          %}checked{%
-          endif
-          %}
-        />
-        <label class="form-check-label" for="emailCheck"
-          >Enable email delivery</label
-        >
+        <input class="form-check-input" type="checkbox" name="email_enabled"
+               id="emailCheck" {% if config.email.enabled %}checked{% endif %}>
+        <label class="form-check-label" for="emailCheck">Enable email delivery</label>
       </div>
       <div class="row g-3">
         <div class="col-md-8">
           <label class="form-label">SMTP Host</label>
-          <input
-            type="text"
-            name="smtp_host"
-            class="form-control"
-            value="{{ config.email.smtp_host }}"
-          />
+          <input type="text" name="smtp_host" class="form-control"
+                 value="{{ config.email.smtp_host }}">
         </div>
         <div class="col-md-4">
           <label class="form-label">Port</label>
-          <input
-            type="number"
-            name="smtp_port"
-            class="form-control"
-            value="{{ config.email.smtp_port }}"
-          />
+          <input type="number" name="smtp_port" class="form-control"
+                 value="{{ config.email.smtp_port }}">
         </div>
         <div class="col-md-6">
           <label class="form-label">Username</label>
-          <input
-            type="text"
-            name="smtp_user"
-            class="form-control"
-            value="{{ config.email.smtp_user }}"
-          />
+          <input type="text" name="smtp_user" class="form-control"
+                 value="{{ config.email.smtp_user }}">
         </div>
         <div class="col-md-6">
           <label class="form-label">Password</label>
-          <input
-            type="password"
-            name="smtp_password"
-            class="form-control"
-            placeholder="Leave blank to keep current"
-          />
+          <input type="password" name="smtp_password" class="form-control"
+                 placeholder="Leave blank to keep current">
         </div>
         <div class="col-md-6">
           <label class="form-label">From</label>
-          <input
-            type="email"
-            name="from_address"
-            class="form-control"
-            value="{{ config.email.from_address }}"
-          />
+          <input type="email" name="from_address" class="form-control"
+                 value="{{ config.email.from_address }}">
         </div>
         <div class="col-md-6">
           <label class="form-label">To</label>
-          <input
-            type="email"
-            name="to_address"
-            class="form-control"
-            value="{{ config.email.to_address }}"
-          />
+          <input type="email" name="to_address" class="form-control"
+                 value="{{ config.email.to_address }}">
         </div>
       </div>
     </div>
@@ -436,50 +184,33 @@
 
   <button type="submit" class="btn btn-primary px-4">Save Settings</button>
   <a href="/" class="btn btn-outline-secondary ms-2">Cancel</a>
+
 </form>
 
 <div class="card mt-4 mb-4">
   <div class="card-header fw-bold">Setup Wizard</div>
   <div class="card-body">
-    <p class="text-muted small mb-3">
-      Some settings are only configurable through the setup wizard. Click any
-      step below to go directly to it.
-    </p>
+    <p class="text-muted small mb-3">Some settings are only configurable through the setup wizard. Click any step below to go directly to it.</p>
     <div class="d-flex flex-wrap gap-2">
-      <a href="/setup/2" class="btn btn-outline-secondary btn-sm"
-        >&#127759; Location</a
-      >
-      <a href="/setup/5" class="btn btn-outline-secondary btn-sm"
-        >&#128197; Daily Content</a
-      >
-      <a href="/setup/6" class="btn btn-outline-secondary btn-sm"
-        >&#128197; Calendar</a
-      >
-      <a href="/setup/7" class="btn btn-outline-secondary btn-sm"
-        >&#127942; Sports</a
-      >
-      <a href="/setup/8" class="btn btn-outline-secondary btn-sm"
-        >&#128240; News Feeds</a
-      >
-      <a href="/setup/9" class="btn btn-outline-secondary btn-sm"
-        >&#9993; Email</a
-      >
+      <a href="/setup/2" class="btn btn-outline-secondary btn-sm">&#127759; Location</a>
+      <a href="/setup/5" class="btn btn-outline-secondary btn-sm">&#128197; Daily Content</a>
+      <a href="/setup/6" class="btn btn-outline-secondary btn-sm">&#128197; Calendar</a>
+      <a href="/setup/7" class="btn btn-outline-secondary btn-sm">&#127942; Sports</a>
+      <a href="/setup/8" class="btn btn-outline-secondary btn-sm">&#128240; News Feeds</a>
+      <a href="/setup/9" class="btn btn-outline-secondary btn-sm">&#9993; Email</a>
     </div>
   </div>
 </div>
 
-{% endblock %} {% block scripts %}
+{% endblock %}
+{% block scripts %}
 <script src="{{ url_for('static', filename='js/time-scroll.js') }}"></script>
 <script>
-  document
-    .querySelectorAll('input[name="tasks_source"]')
-    .forEach(function (radio) {
-      radio.addEventListener("change", function () {
-        document.getElementById("settingsFilePathRow").style.display =
-          this.value === "file" ? "" : "none";
-        document.getElementById("settingsApiFieldsRow").style.display =
-          this.value === "api" ? "" : "none";
-      });
+  document.querySelectorAll('input[name="tasks_source"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      document.getElementById('settingsFilePathRow').style.display = this.value === 'file' ? '' : 'none';
+      document.getElementById('settingsApiFieldsRow').style.display = this.value === 'api' ? '' : 'none';
     });
+  });
 </script>
 {% endblock %}
