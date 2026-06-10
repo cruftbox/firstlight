@@ -87,6 +87,20 @@
   </section>
   {% endif %}
 
+  {% if world_cup %}
+  <section class="world-cup-section">
+    <h2>&#127942; WORLD CUP</h2>
+    {% set ns = namespace(current_label=None) %}
+    {% for match in world_cup %}
+      {% if match.label != ns.current_label %}
+        {% set ns.current_label = match.label %}
+        <div class="wc-day-label">{{ match.label }}{% if match.round %} &nbsp;·&nbsp; <span class="wc-round">{{ match.round }}</span>{% endif %}</div>
+      {% endif %}
+      <div class="wc-match">{{ match.text }}</div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
   {% if news %}
   <section class="news-section">
     <h2>NEWS</h2>
@@ -95,20 +109,6 @@
       • {{ item.title }}
       {% if item.label %}<span class="news-label">[{{ item.label }}]</span>{% endif %}
     </div>
-    {% endfor %}
-  </section>
-  {% endif %}
-
-  {% if world_cup %}
-  <section class="world-cup-section">
-    <h2>&#127942; FIFA WORLD CUP</h2>
-    {% set ns = namespace(current_label=None) %}
-    {% for match in world_cup %}
-      {% if match.label != ns.current_label %}
-        {% set ns.current_label = match.label %}
-        <div class="wc-day-label">{{ match.label }}{% if match.round %} &nbsp;·&nbsp; <span class="wc-round">{{ match.round }}</span>{% endif %}</div>
-      {% endif %}
-      <div class="wc-match">{{ match.text }}</div>
     {% endfor %}
   </section>
   {% endif %}
