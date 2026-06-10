@@ -34,6 +34,7 @@ def render_digest(data: dict, config: dict) -> bytes:
         news=data.get("news", []),
         todos=data.get("todos", []),
         history=data.get("history", []),
+        world_cup=data.get("world_cup", []),
         errors=data.get("errors", []),
     )
 
