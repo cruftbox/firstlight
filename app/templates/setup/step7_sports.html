@@ -3,17 +3,21 @@
 {% block progress_pct %}70{% endblock %}
 {% block step_title %}Sports Teams{% endblock %}
 {% block content %}
-<p class="text-muted">Enter team names or abbreviations, comma-separated. Leave blank to skip a league.</p>
+<p class="text-muted">Start typing a team and pick it from the list. Leave blank to skip a league.</p>
+<p class="text-muted small">Picking from the list stores ESPN's team ID — a number, shown with the team
+  name beneath the field. IDs are used because team names and abbreviations get
+  revised, and a stale one stops matching without any error. Typing a name or
+  abbreviation still works.</p>
 <form method="POST">
   {% set leagues = [
-    ("mlb", "MLB Baseball", "LAD, SF, NYY"),
-    ("nfl", "NFL Football", "LAR, KC, NE"),
-    ("nba", "NBA Basketball", "Lakers, Celtics"),
-    ("nhl", "NHL Hockey", "LAK, SJS, NYR"),
-    ("wnba", "WNBA", "Sparks, Storm"),
-    ("nwsl", "NWSL Women's Soccer", "Angel City, Portland"),
-    ("mls", "MLS Soccer", "LAFC, Portland"),
-    ("premier_league", "Premier League", "Arsenal, Chelsea"),
+    ("mlb", "MLB Baseball", "start typing: Dodgers"),
+    ("nfl", "NFL Football", "start typing: Rams"),
+    ("nba", "NBA Basketball", "start typing: Lakers"),
+    ("nhl", "NHL Hockey", "start typing: Kings"),
+    ("wnba", "WNBA", "start typing: Sparks"),
+    ("nwsl", "NWSL Women's Soccer", "start typing: Angel City"),
+    ("mls", "MLS Soccer", "start typing: LAFC"),
+    ("premier_league", "Premier League", "start typing: Arsenal"),
   ] %}
   {% for key, label, placeholder in leagues %}
   <div class="mb-2">
