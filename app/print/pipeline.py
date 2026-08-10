@@ -42,7 +42,8 @@ def collect_data(config: dict) -> dict:
             errors.append("Calendar unavailable")
 
     try:
-        sports_data = sports.get_scores(config["sports"], config["firstlight"]["timezone"])
+        sports_data = sports.get_scores(config["sports"], config["firstlight"]["timezone"],
+                                        warnings=errors)
     except Exception as e:
         logging.warning("Sports provider failed: %s", e)
         sports_data = []

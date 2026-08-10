@@ -23,8 +23,14 @@ SPORT_EMOJIS = {
 }
 
 
-def get_scores(sports_config: dict, timezone_str: str = "America/Los_Angeles") -> list:
-    """Returns list of {"emoji", "text"} covering yesterday's finals and today's games."""
+def get_scores(sports_config: dict, timezone_str: str = "America/Los_Angeles",
+               warnings: list | None = None) -> list:
+    """Returns list of {"emoji", "text"} covering yesterday's finals and today's games.
+
+    If `warnings` is given, appends a one-line notice for any configured team
+    whose name is not in the league's roster — almost always a stale or
+    mistyped abbreviation, which otherwise fails silently.
+    """
     try:
         local_tz = pytz.timezone(timezone_str)
     except Exception:
@@ -42,6 +48,9 @@ def get_scores(sports_config: dict, timezone_str: str = "America/Los_Angeles") -
         if not endpoint:
             continue
 
+        if warnings is not None:
+            _warn_unknown_teams(league, endpoint, teams, warnings)
+
         yesterday_events = _fetch_events(endpoint, yesterday_str)
         today_events = _fetch_events(endpoint, today_str)
 
@@ -56,6 +65,45 @@ def get_scores(sports_config: dict, timezone_str: str = "America/Los_Angeles") -
                 results.append({"emoji": SPORT_EMOJIS.get(league, "🏆"), "text": row})
 
     return results
+
+
+def _fetch_roster(endpoint: str) -> tuple[set, set] | None:
+    """Return (abbreviations upper, names lower) for a league, or None if unavailable.
+
+    Mirrors the two ways _format_event matches a configured team.
+    """
+    try:
+        resp = get_with_retry(endpoint.replace("/scoreboard", "/teams"), timeout=10)
+        teams = resp.json()["sports"][0]["leagues"][0]["teams"]
+    except Exception as e:
+        logging.warning("Roster fetch failed for %s: %s", endpoint, e)
+        return None
+
+    abbrevs, names = set(), set()
+    for entry in teams:
+        team = entry.get("team", {})
+        if team.get("abbreviation"):
+            abbrevs.add(team["abbreviation"].upper())
+        if team.get("name"):
+            names.add(team["name"].lower())
+    return (abbrevs, names) if abbrevs else None
+
+
+def _warn_unknown_teams(league: str, endpoint: str, teams: list, warnings: list) -> None:
+    """Append a notice for configured teams the league does not recognize.
+
+    Fails open: if the roster cannot be fetched we say nothing rather than
+    warning about teams we were simply unable to verify.
+    """
+    roster = _fetch_roster(endpoint)
+    if roster is None:
+        return
+    abbrevs, names = roster
+
+    unknown = [t for t in teams if t.upper() not in abbrevs and t.lower() not in names]
+    for team in unknown:
+        logging.warning("Configured %s team %r is not in the league roster", league, team)
+        warnings.append(f"{league.upper()} team “{team}” not recognized")
 
 
 def _fetch_events(endpoint: str, date_str: str) -> list:

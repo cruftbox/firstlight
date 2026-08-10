@@ -258,12 +258,26 @@ MLB_UPCOMING = {
     }]
 }
 
+MLB_NONE = {"events": []}
+
+MLB_TEAMS_URL = MLB_URL.replace("/scoreboard", "/teams")
+
+MLB_ROSTER = {
+    "sports": [{"leagues": [{"teams": [
+        {"team": {"abbreviation": "LAD", "name": "Dodgers"}},
+        {"team": {"abbreviation": "SF", "name": "Giants"}},
+    ]}]}]
+}
+
 EMPTY_SPORTS = {"mlb": [], "nfl": [], "nba": [], "wnba": [], "mls": [], "premier_league": []}
 
 
 @resp_lib.activate
 def test_sports_final_game():
+    # get_scores fetches yesterday then today; register both so one game is
+    # not counted twice.
     resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
     from app.providers.sports import get_scores
     results = get_scores({**EMPTY_SPORTS, "mlb": ["LAD"]})
     assert len(results) == 1
@@ -274,12 +288,78 @@ def test_sports_final_game():
 
 @resp_lib.activate
 def test_sports_upcoming_game():
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
     resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_UPCOMING, status=200)
     from app.providers.sports import get_scores
     results = get_scores({**EMPTY_SPORTS, "mlb": ["LAD"]})
     assert len(results) == 1
     assert "Dodgers" in results[0]["text"]
     assert "Final" not in results[0]["text"]
+
+
+# ── Unknown-team warnings ─────────────────────────────────────────────────────
+
+
+@resp_lib.activate
+def test_sports_warns_on_unrecognized_team():
+    """A stale abbreviation (the real ACFC/LAK bug) must not fail silently."""
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    warnings = []
+    get_scores({**EMPTY_SPORTS, "mlb": ["NOPE"]}, warnings=warnings)
+    assert len(warnings) == 1
+    assert "NOPE" in warnings[0]
+    assert "MLB" in warnings[0]
+
+
+@resp_lib.activate
+def test_sports_no_warning_for_valid_abbreviation():
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    warnings = []
+    get_scores({**EMPTY_SPORTS, "mlb": ["LAD"]}, warnings=warnings)
+    assert warnings == []
+
+
+@resp_lib.activate
+def test_sports_no_warning_for_valid_team_name():
+    """_format_event matches on name as well as abbreviation; so must the check."""
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    warnings = []
+    get_scores({**EMPTY_SPORTS, "mlb": ["Dodgers"]}, warnings=warnings)
+    assert warnings == []
+
+
+@resp_lib.activate
+def test_sports_no_warning_when_roster_unavailable():
+    """Fail open — an unreachable roster must not accuse a valid team."""
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, status=500)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    warnings = []
+    get_scores({**EMPTY_SPORTS, "mlb": ["LAD"]}, warnings=warnings)
+    assert warnings == []
+
+
+@resp_lib.activate
+def test_sports_scores_still_returned_when_team_unrecognized():
+    """A warning must not suppress the rest of the league's output."""
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    warnings = []
+    results = get_scores({**EMPTY_SPORTS, "mlb": ["LAD", "NOPE"]}, warnings=warnings)
+    assert len(results) == 1
+    assert len(warnings) == 1
 
 
 @resp_lib.activate

@@ -1,0 +1,57 @@
+name: Team list audit
+
+# The setup wizard's team picker is a hardcoded list. ESPN renames teams,
+# leagues expand, and the Premier League swaps three clubs every season through
+# promotion and relegation. A stale entry never errors — it just silently stops
+# matching, and the digest quietly prints one less score. This job is the only
+# thing that notices.
+
+on:
+  schedule:
+    # 14:00 UTC on the 1st of each month (07:00 PDT / 06:00 PST).
+    # GitHub cron is always UTC and has no timezone option.
+    - cron: "0 14 1 * *"
+  workflow_dispatch:  # also runnable on demand from the Actions tab
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Only what the network suite needs. Installing requirements.txt would
+      # drag in weasyprint and its system libraries for no benefit here.
+      - name: Install dependencies
+        run: pip install pytest requests pytz
+
+      - name: Audit team lists against ESPN
+        run: pytest -m network -v
+
+      - name: Open an issue if the lists have drifted
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Team picker is out of sync with ESPN"
+          # Don't stack a fresh issue every month while one is already open.
+          existing=$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            echo "Issue #$existing already open; adding a comment instead."
+            gh issue comment "$existing" --body "Still failing as of $(date -u +%Y-%m-%d). Run: $RUN_URL"
+          else
+            gh issue create --title "$title" --body \
+              "The monthly team-list audit failed, which means at least one team in the setup wizard's picker no longer matches ESPN. Anyone who selected an affected team is silently getting no scores for it.
+
+          The failing test output names the dead abbreviations and prints the current ESPN roster to correct them against.
+
+          Run: $RUN_URL"
+          fi
