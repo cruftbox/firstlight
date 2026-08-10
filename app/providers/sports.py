@@ -27,9 +27,13 @@ def get_scores(sports_config: dict, timezone_str: str = "America/Los_Angeles",
                warnings: list | None = None) -> list:
     """Returns list of {"emoji", "text"} covering yesterday's finals and today's games.
 
+    Configured teams are resolved against the league roster to ESPN's numeric
+    team id, and events are then matched on that id. The id is stable across
+    rebrands; abbreviations and names are display labels ESPN revises freely,
+    which is how a team can silently stop matching.
+
     If `warnings` is given, appends a one-line notice for any configured team
-    whose name is not in the league's roster — almost always a stale or
-    mistyped abbreviation, which otherwise fails silently.
+    the roster does not recognize.
     """
     try:
         local_tz = pytz.timezone(timezone_str)
@@ -48,62 +52,93 @@ def get_scores(sports_config: dict, timezone_str: str = "America/Los_Angeles",
         if not endpoint:
             continue
 
-        if warnings is not None:
-            _warn_unknown_teams(league, endpoint, teams, warnings)
+        followed_ids = _resolve_teams(league, endpoint, teams, warnings)
 
         yesterday_events = _fetch_events(endpoint, yesterday_str)
         today_events = _fetch_events(endpoint, today_str)
 
         for event in yesterday_events:
-            row = _format_event(event, teams, local_tz, label="Yesterday")
+            row = _format_event(event, teams, local_tz, label="Yesterday",
+                                followed_ids=followed_ids)
             if row:
                 results.append({"emoji": SPORT_EMOJIS.get(league, "🏆"), "text": row})
 
         for event in today_events:
-            row = _format_event(event, teams, local_tz, label=None)
+            row = _format_event(event, teams, local_tz, label=None,
+                                followed_ids=followed_ids)
             if row:
                 results.append({"emoji": SPORT_EMOJIS.get(league, "🏆"), "text": row})
 
     return results
 
 
-def _fetch_roster(endpoint: str) -> tuple[set, set] | None:
-    """Return (abbreviations upper, names lower) for a league, or None if unavailable.
+def _fetch_roster(endpoint: str) -> dict | None:
+    """Build {lowercased label: team id} for a league, or None if unavailable.
 
-    Mirrors the two ways _format_event matches a configured team.
+    Indexes every label ESPN offers for a team — abbreviation, name, display
+    name, short display name — plus the id itself, so a config may name a team
+    any of the ways a person reasonably would.
+
+    Deliberately omits `location`: within a league it is not unique ("Los
+    Angeles" is both the Lakers and, some seasons, the Clippers), and a label
+    that silently resolves to the wrong team is worse than one that resolves to
+    nothing. Any label that maps to two different ids is dropped for the same
+    reason.
     """
     try:
-        resp = get_with_retry(endpoint.replace("/scoreboard", "/teams"), timeout=10)
+        resp = get_with_retry(endpoint.replace("/scoreboard", "/teams"),
+                              attempts=2, delay=1.0, timeout=10)
         teams = resp.json()["sports"][0]["leagues"][0]["teams"]
     except Exception as e:
         logging.warning("Roster fetch failed for %s: %s", endpoint, e)
         return None
 
-    abbrevs, names = set(), set()
+    index, ambiguous = {}, set()
     for entry in teams:
         team = entry.get("team", {})
-        if team.get("abbreviation"):
-            abbrevs.add(team["abbreviation"].upper())
-        if team.get("name"):
-            names.add(team["name"].lower())
-    return (abbrevs, names) if abbrevs else None
+        team_id = str(team.get("id") or "")
+        if not team_id:
+            continue
+        labels = (team.get("abbreviation"), team.get("name"),
+                  team.get("displayName"), team.get("shortDisplayName"), team_id)
+        for label in labels:
+            if not label:
+                continue
+            key = str(label).strip().lower()
+            if key in index and index[key] != team_id:
+                ambiguous.add(key)
+            else:
+                index[key] = team_id
+
+    for key in ambiguous:
+        logging.debug("Ambiguous team label %r in %s — ignoring it", key, endpoint)
+        index.pop(key, None)
+
+    return index or None
 
 
-def _warn_unknown_teams(league: str, endpoint: str, teams: list, warnings: list) -> None:
-    """Append a notice for configured teams the league does not recognize.
+def _resolve_teams(league: str, endpoint: str, teams: list,
+                   warnings: list | None = None) -> set | None:
+    """Resolve configured team labels to ESPN team ids.
 
-    Fails open: if the roster cannot be fetched we say nothing rather than
-    warning about teams we were simply unable to verify.
+    Returns the set of ids to follow, or None when the roster is unavailable —
+    in which case the caller falls back to matching on labels, so a roster
+    outage degrades accuracy rather than emptying the digest.
     """
-    roster = _fetch_roster(endpoint)
-    if roster is None:
-        return
-    abbrevs, names = roster
+    index = _fetch_roster(endpoint)
+    if index is None:
+        return None
 
-    unknown = [t for t in teams if t.upper() not in abbrevs and t.lower() not in names]
-    for team in unknown:
-        logging.warning("Configured %s team %r is not in the league roster", league, team)
-        warnings.append(f"{league.upper()} team “{team}” not recognized")
+    resolved = set()
+    for team in teams:
+        team_id = index.get(str(team).strip().lower())
+        if team_id is None:
+            logging.warning("Configured %s team %r is not in the league roster", league, team)
+            if warnings is not None:
+                warnings.append(f"{league.upper()} team “{team}” not recognized")
+        else:
+            resolved.add(team_id)
+    return resolved
 
 
 def _fetch_events(endpoint: str, date_str: str) -> list:
@@ -177,14 +212,22 @@ def _format_wc_event(event: dict, local_tz, label: str) -> dict | None:
     return {"label": label, "text": text, "round": round_name}
 
 
-def _format_event(event: dict, teams: list, local_tz, label: str | None) -> str | None:
+def _format_event(event: dict, teams: list, local_tz, label: str | None,
+                  followed_ids: set | None = None) -> str | None:
     competition = event.get("competitions", [{}])[0]
     competitors = competition.get("competitors", [])
 
-    abbrevs = {c["team"].get("abbreviation", "").upper() for c in competitors if "team" in c}
-    names = {c["team"].get("name", "").lower() for c in competitors if "team" in c}
+    if followed_ids is not None:
+        # Preferred path: ids resolved from the roster.
+        event_ids = {str(c["team"].get("id", "")) for c in competitors if "team" in c}
+        matched = bool(followed_ids & event_ids)
+    else:
+        # Roster unavailable — fall back to matching the labels themselves.
+        abbrevs = {c["team"].get("abbreviation", "").upper() for c in competitors if "team" in c}
+        names = {c["team"].get("name", "").lower() for c in competitors if "team" in c}
+        matched = any(t.upper() in abbrevs or t.lower() in names for t in teams)
 
-    if not any(t.upper() in abbrevs or t.lower() in names for t in teams):
+    if not matched:
         return None
 
     completed = event.get("status", {}).get("type", {}).get("completed", False)

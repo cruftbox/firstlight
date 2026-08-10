@@ -237,8 +237,8 @@ MLB_FINAL = {
         "status": {"type": {"name": "STATUS_FINAL", "completed": True}},
         "competitions": [{
             "competitors": [
-                {"team": {"name": "Dodgers", "abbreviation": "LAD"}, "score": "4", "homeAway": "home"},
-                {"team": {"name": "Giants", "abbreviation": "SF"}, "score": "2", "homeAway": "away"},
+                {"team": {"id": "19", "name": "Dodgers", "abbreviation": "LAD"}, "score": "4", "homeAway": "home"},
+                {"team": {"id": "26", "name": "Giants", "abbreviation": "SF"}, "score": "2", "homeAway": "away"},
             ]
         }]
     }]
@@ -251,8 +251,8 @@ MLB_UPCOMING = {
         "status": {"type": {"name": "STATUS_SCHEDULED", "completed": False}},
         "competitions": [{
             "competitors": [
-                {"team": {"name": "Dodgers", "abbreviation": "LAD"}, "score": "0", "homeAway": "home"},
-                {"team": {"name": "Giants", "abbreviation": "SF"}, "score": "0", "homeAway": "away"},
+                {"team": {"id": "19", "name": "Dodgers", "abbreviation": "LAD"}, "score": "0", "homeAway": "home"},
+                {"team": {"id": "26", "name": "Giants", "abbreviation": "SF"}, "score": "0", "homeAway": "away"},
             ]
         }]
     }]
@@ -264,8 +264,10 @@ MLB_TEAMS_URL = MLB_URL.replace("/scoreboard", "/teams")
 
 MLB_ROSTER = {
     "sports": [{"leagues": [{"teams": [
-        {"team": {"abbreviation": "LAD", "name": "Dodgers"}},
-        {"team": {"abbreviation": "SF", "name": "Giants"}},
+        {"team": {"id": "19", "abbreviation": "LAD", "name": "Dodgers",
+                  "displayName": "Los Angeles Dodgers"}},
+        {"team": {"id": "26", "abbreviation": "SF", "name": "Giants",
+                  "displayName": "San Francisco Giants"}},
     ]}]}]
 }
 
@@ -276,6 +278,7 @@ EMPTY_SPORTS = {"mlb": [], "nfl": [], "nba": [], "wnba": [], "mls": [], "premier
 def test_sports_final_game():
     # get_scores fetches yesterday then today; register both so one game is
     # not counted twice.
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
     resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
     resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
     from app.providers.sports import get_scores
@@ -288,6 +291,7 @@ def test_sports_final_game():
 
 @resp_lib.activate
 def test_sports_upcoming_game():
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
     resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
     resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_UPCOMING, status=200)
     from app.providers.sports import get_scores
@@ -350,6 +354,72 @@ def test_sports_no_warning_when_roster_unavailable():
 
 
 @resp_lib.activate
+@pytest.mark.parametrize("configured", ["LAD", "Dodgers", "Los Angeles Dodgers", "19", "  lad  "])
+def test_sports_resolves_any_label_to_the_same_team(configured):
+    """Abbreviation, name, display name or raw id must all find the Dodgers."""
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    warnings = []
+    results = get_scores({**EMPTY_SPORTS, "mlb": [configured]}, warnings=warnings)
+    assert len(results) == 1
+    assert "Dodgers" in results[0]["text"]
+    assert warnings == []
+
+
+@resp_lib.activate
+def test_sports_matches_by_id_when_abbreviation_has_changed():
+    """The Angel City case: config holds a label ESPN has since retired.
+
+    The roster still maps the old *name* to the id, so the game is found even
+    though the abbreviation in the event payload no longer matches the config.
+    """
+    roster = {"sports": [{"leagues": [{"teams": [
+        {"team": {"id": "19", "abbreviation": "NEWABBR", "name": "Dodgers"}},
+        {"team": {"id": "26", "abbreviation": "SF", "name": "Giants"}},
+    ]}]}]}
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=roster, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    warnings = []
+    results = get_scores({**EMPTY_SPORTS, "mlb": ["Dodgers"]}, warnings=warnings)
+    assert len(results) == 1
+    assert warnings == []
+
+
+@resp_lib.activate
+def test_sports_falls_back_to_labels_when_roster_unavailable():
+    """A roster outage must degrade accuracy, not empty the digest."""
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, status=500)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    warnings = []
+    results = get_scores({**EMPTY_SPORTS, "mlb": ["LAD"]}, warnings=warnings)
+    assert len(results) == 1
+    assert warnings == []  # unverifiable is not the same as wrong
+
+
+@resp_lib.activate
+def test_sports_ambiguous_label_is_not_guessed():
+    """A label naming two teams resolves to neither, rather than to the wrong one."""
+    roster = {"sports": [{"leagues": [{"teams": [
+        {"team": {"id": "19", "abbreviation": "LAD", "name": "Kings"}},
+        {"team": {"id": "26", "abbreviation": "SF", "name": "Kings"}},
+    ]}]}]}
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=roster, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    warnings = []
+    get_scores({**EMPTY_SPORTS, "mlb": ["Kings"]}, warnings=warnings)
+    assert len(warnings) == 1
+    assert "Kings" in warnings[0]
+
+
+@resp_lib.activate
 def test_sports_scores_still_returned_when_team_unrecognized():
     """A warning must not suppress the rest of the league's output."""
     resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
@@ -364,7 +434,9 @@ def test_sports_scores_still_returned_when_team_unrecognized():
 
 @resp_lib.activate
 def test_sports_no_matching_team():
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
     resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
     from app.providers.sports import get_scores
     results = get_scores({**EMPTY_SPORTS, "mlb": ["Yankees"]})
     assert results == []
@@ -378,6 +450,7 @@ def test_sports_empty_config():
 
 @resp_lib.activate
 def test_sports_network_error():
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
     resp_lib.add(resp_lib.GET, MLB_URL, body=ConnectionError("network"))
     from app.providers.sports import get_scores
     results = get_scores({**EMPTY_SPORTS, "mlb": ["LAD"]})
