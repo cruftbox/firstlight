@@ -32,6 +32,11 @@ jobs:
       - name: Install dependencies
         run: pip install pytest requests pytz
 
+      # No network and no browser needed — this one is pure string mapping,
+      # and it is the only coverage the picker's name/id handling has.
+      - name: Test the team picker
+        run: node tests/test_picker.js
+
       - name: Audit team lists against ESPN
         run: pytest -m network -v
 

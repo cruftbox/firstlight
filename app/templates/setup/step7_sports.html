@@ -3,28 +3,32 @@
 {% block progress_pct %}70{% endblock %}
 {% block step_title %}Sports Teams{% endblock %}
 {% block content %}
-<p class="text-muted">Start typing a team and pick it from the list. Leave blank to skip a league.</p>
-<p class="text-muted small">Picking from the list stores ESPN's team ID — a number, shown with the team
-  name beneath the field. IDs are used because team names and abbreviations get
-  revised, and a stale one stops matching without any error. Typing a name or
-  abbreviation still works.</p>
+<p class="text-muted">Start typing a team and pick it from the list. Follow as many teams per league as
+  you like — separate them with commas. Leave a league blank to skip it.</p>
+<p class="text-muted small">Teams are saved by ESPN's stable team ID rather than by name, because names and
+  abbreviations get revised and a stale one stops matching without any error.
+  That happens behind the scenes — you only ever see team names here.</p>
 <form method="POST">
   {% set leagues = [
-    ("mlb", "MLB Baseball", "start typing: Dodgers"),
-    ("nfl", "NFL Football", "start typing: Rams"),
-    ("nba", "NBA Basketball", "start typing: Lakers"),
-    ("nhl", "NHL Hockey", "start typing: Kings"),
-    ("wnba", "WNBA", "start typing: Sparks"),
-    ("nwsl", "NWSL Women's Soccer", "start typing: Angel City"),
-    ("mls", "MLS Soccer", "start typing: LAFC"),
-    ("premier_league", "Premier League", "start typing: Arsenal"),
+    ("mlb", "MLB Baseball", "Dodgers, Giants, Yankees"),
+    ("nfl", "NFL Football", "Rams, Chiefs"),
+    ("nba", "NBA Basketball", "Lakers, Celtics"),
+    ("nhl", "NHL Hockey", "Kings, Sharks"),
+    ("wnba", "WNBA", "Sparks, Storm"),
+    ("nwsl", "NWSL Women's Soccer", "Angel City, Portland Thorns"),
+    ("mls", "MLS Soccer", "LAFC, Timbers"),
+    ("premier_league", "Premier League", "Arsenal, Chelsea"),
   ] %}
   {% for key, label, placeholder in leagues %}
   <div class="mb-2">
     <label class="form-label fw-semibold">{{ label }}</label>
-    <input type="text" name="{{ key }}" class="form-control"
-           placeholder="{{ placeholder }}"
+    {# Visible field shows names and is never submitted; the hidden field
+       carries the ids. Rendered pre-filled so the config survives a submit
+       with JavaScript disabled. #}
+    <input type="text" data-league="{{ key }}" class="form-control"
+           placeholder="{{ placeholder }}" autocomplete="off"
            value="{{ config.sports[key] | join(', ') }}">
+    <input type="hidden" name="{{ key }}" value="{{ config.sports[key] | join(', ') }}">
   </div>
   {% endfor %}
   <hr class="my-3">

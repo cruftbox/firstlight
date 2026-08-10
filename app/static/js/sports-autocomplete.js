@@ -224,12 +224,17 @@ const LEAGUE_TEAMS = {
 
 document.addEventListener('DOMContentLoaded', function () {
   Object.keys(LEAGUE_TEAMS).forEach(function (league) {
-    const input = document.querySelector('input[name="' + league + '"]');
-    if (input) setupAutocomplete(input, LEAGUE_TEAMS[league]);
+    // The visible field shows team names; the hidden field carries the ids
+    // that actually get saved. The hidden field is what the form submits, and
+    // the server renders it pre-filled, so with JavaScript off the existing
+    // configuration round-trips untouched rather than being wiped.
+    const visible = document.querySelector('input[data-league="' + league + '"]');
+    const hidden = document.querySelector('input[type="hidden"][name="' + league + '"]');
+    if (visible && hidden) setupAutocomplete(visible, hidden, LEAGUE_TEAMS[league]);
   });
 });
 
-function setupAutocomplete(input, teams) {
+function setupAutocomplete(input, hidden, teams) {
   const dropdown = document.createElement('ul');
   dropdown.className = 'list-group position-absolute w-100 shadow-sm';
   dropdown.style.cssText = 'z-index:1000;max-height:200px;overflow-y:auto;display:none;';
@@ -240,15 +245,47 @@ function setupAutocomplete(input, teams) {
   wrapper.appendChild(input);
   wrapper.appendChild(dropdown);
 
+  const note = document.createElement('div');
+  note.className = 'form-text small text-danger';
+  wrapper.parentNode.insertBefore(note, wrapper.nextSibling);
+
+  function find(value) {
+    const key = String(value).trim().toLowerCase();
+    return teams.find(t => t.id === String(value).trim() ||
+                           t.abbr.toLowerCase() === key ||
+                           t.name.toLowerCase() === key);
+  }
+
+  function tokens(value) {
+    return value.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  /** Visible names -> hidden ids. Anything unrecognised passes through
+   *  verbatim, so a hand-typed team the provider can still resolve is not
+   *  silently dropped — it is only flagged. */
+  function sync() {
+    const unknown = [];
+    const ids = tokens(input.value).map(function (entry) {
+      const hit = find(entry);
+      if (!hit) { unknown.push(entry); return entry; }
+      return hit.id;
+    });
+    hidden.value = ids.join(', ');
+    note.textContent = unknown.length
+      ? 'Not recognized: ' + unknown.join(', ')
+      : '';
+  }
+
   input.addEventListener('input', function () {
     const val = this.value;
     const lastComma = val.lastIndexOf(',');
     const token = (lastComma >= 0 ? val.slice(lastComma + 1) : val).trim().toLowerCase();
 
+    sync();
+
     if (!token) { dropdown.style.display = 'none'; return; }
 
-    // Substring rather than prefix: "city" should find Man City, and once the
-    // field holds ids the user has no other way to search.
+    // Substring rather than prefix, so "city" finds Man City.
     const matches = teams.filter(function (t) {
       return t.abbr.toLowerCase().includes(token) ||
              t.name.toLowerCase().includes(token);
@@ -264,14 +301,11 @@ function setupAutocomplete(input, teams) {
       li.textContent = t.abbr + ' — ' + t.name;
       li.addEventListener('mousedown', function (e) {
         e.preventDefault();
-        // Write the ESPN team id, not the abbreviation. Abbreviations are
-        // display labels ESPN revises (ACFC -> LA), and a stale one silently
-        // matches nothing. The id never changes.
         const prefix = lastComma >= 0 ? val.slice(0, lastComma + 1) + ' ' : '';
-        input.value = prefix + t.id;
+        input.value = prefix + t.name;
         dropdown.style.display = 'none';
         input.focus();
-        describe();
+        sync();
       });
       dropdown.appendChild(li);
     });
@@ -282,26 +316,12 @@ function setupAutocomplete(input, teams) {
     setTimeout(function () { dropdown.style.display = 'none'; }, 150);
   });
 
-  // The field stores ids, which are unreadable on their own. Echo the team
-  // names underneath so the saved value is still verifiable at a glance, and
-  // so an entry that resolves to nothing is visible rather than silent.
-  const hint = document.createElement('div');
-  hint.className = 'form-text small';
-  wrapper.parentNode.insertBefore(hint, wrapper.nextSibling);
-
-  function describe() {
-    const entries = input.value.split(',').map(s => s.trim()).filter(Boolean);
-    if (!entries.length) { hint.textContent = ''; return; }
-    const labels = entries.map(function (entry) {
-      const key = entry.toLowerCase();
-      const hit = teams.find(t => t.id === entry ||
-                                  t.abbr.toLowerCase() === key ||
-                                  t.name.toLowerCase() === key);
-      return hit ? hit.name : entry + ' (unrecognized)';
-    });
-    hint.textContent = labels.join(', ');
-  }
-
-  input.addEventListener('input', describe);
-  describe();
+  // Populate the visible field from the saved ids on load.
+  input.value = tokens(hidden.value)
+    .map(function (entry) {
+      const hit = find(entry);
+      return hit ? hit.name : entry;
+    })
+    .join(', ');
+  sync();
 }
