@@ -95,13 +95,18 @@ def test_archive_save_creates_file(tmp_path):
 
 
 def test_archive_cleanup_removes_old(tmp_path):
-    (tmp_path / "2026-01-01.pdf").write_bytes(b"old")
-    (tmp_path / "2026-04-28.pdf").write_bytes(b"new")
+    # Dates must be relative to today: cleanup() compares against
+    # date.today(), so fixed dates silently stop testing anything once they
+    # age past the retention window, and then fail outright.
+    stale = date.today() - timedelta(days=60)
+    fresh = date.today() - timedelta(days=5)
+    (tmp_path / f"{stale.isoformat()}.pdf").write_bytes(b"old")
+    (tmp_path / f"{fresh.isoformat()}.pdf").write_bytes(b"new")
     import app.print.archive as arch
     with _arch_patch.object(arch, "ARCHIVE_DIR", tmp_path):
         arch.cleanup(retention_days=30)
-    assert not (tmp_path / "2026-01-01.pdf").exists()
-    assert (tmp_path / "2026-04-28.pdf").exists()
+    assert not (tmp_path / f"{stale.isoformat()}.pdf").exists()
+    assert (tmp_path / f"{fresh.isoformat()}.pdf").exists()
 
 
 def test_archive_list_all_sorted_newest_first(tmp_path):
