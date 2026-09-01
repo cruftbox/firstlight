@@ -37,8 +37,13 @@ jobs:
       - name: Test the team picker
         run: node tests/test_picker.js
 
+      # Scoped to this one file: testpaths=tests in pytest.ini means an
+      # unscoped `pytest -m network` still collects every test module,
+      # including ones that import Flask/PyYAML/etc — none of which this
+      # job installs — and a collection error aborts the run before any
+      # network test executes.
       - name: Audit team lists against ESPN
-        run: pytest -m network -v
+        run: pytest -m network -v tests/test_team_lists.py
 
       - name: Open an issue if the lists have drifted
         if: failure()
