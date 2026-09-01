@@ -29,8 +29,11 @@ jobs:
 
       # Only what the network suite needs. Installing requirements.txt would
       # drag in weasyprint and its system libraries for no benefit here.
+      # Flask is here because importing app.providers.sports (for
+      # test_every_configured_league_is_audited) initializes the app
+      # package, and app/__init__.py imports Flask at module level.
       - name: Install dependencies
-        run: pip install pytest requests pytz
+        run: pip install pytest requests pytz flask
 
       # No network and no browser needed — this one is pure string mapping,
       # and it is the only coverage the picker's name/id handling has.
