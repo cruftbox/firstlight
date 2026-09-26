@@ -45,7 +45,9 @@ def get_scores(sports_config: dict, timezone_str: str = "America/Los_Angeles",
     today_str = now_local.strftime("%Y%m%d")
     yesterday_str = (now_local - timedelta(days=1)).strftime("%Y%m%d")
 
-    results = []
+    # All of yesterday's results come before any of today's games, across
+    # leagues; within each group, leagues keep their configured order.
+    yesterday_rows, today_rows = [], []
     for league, teams in sports_config.items():
         if not teams:
             continue
@@ -62,15 +64,15 @@ def get_scores(sports_config: dict, timezone_str: str = "America/Los_Angeles",
             row = _format_event(event, teams, local_tz, label="Yesterday",
                                 followed_ids=followed_ids)
             if row:
-                results.append({"emoji": SPORT_EMOJIS.get(league, "🏆"), "text": row})
+                yesterday_rows.append({"emoji": SPORT_EMOJIS.get(league, "🏆"), "text": row})
 
         for event in today_events:
             row = _format_event(event, teams, local_tz, label=None,
                                 followed_ids=followed_ids)
             if row:
-                results.append({"emoji": SPORT_EMOJIS.get(league, "🏆"), "text": row})
+                today_rows.append({"emoji": SPORT_EMOJIS.get(league, "🏆"), "text": row})
 
-    return results
+    return yesterday_rows + today_rows
 
 
 def _fetch_roster(endpoint: str) -> dict | None:

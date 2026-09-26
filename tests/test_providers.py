@@ -483,6 +483,31 @@ def test_sports_id_still_matches_when_roster_unavailable():
 
 
 @resp_lib.activate
+def test_sports_yesterday_results_precede_today_games_across_leagues():
+    """A later league's final must not land below an earlier league's game today."""
+    nba_url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
+    nba_final = {"events": [{
+        "name": "Celtics at Lakers",
+        "date": "2026-04-28T02:30Z",
+        "status": {"type": {"name": "STATUS_FINAL", "completed": True}},
+        "competitions": [{"competitors": [
+            {"team": {"id": "13", "name": "Lakers", "abbreviation": "LAL"}, "score": "110", "homeAway": "home"},
+            {"team": {"id": "2", "name": "Celtics", "abbreviation": "BOS"}, "score": "104", "homeAway": "away"},
+        ]}],
+    }]}
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_UPCOMING, status=200)
+    resp_lib.add(resp_lib.GET, nba_url, json=nba_final, status=200)
+    resp_lib.add(resp_lib.GET, nba_url, json={"events": []}, status=200)
+    from app.providers.sports import get_scores
+    results = get_scores({**EMPTY_SPORTS, "mlb": ["19"], "nba": ["13"]})
+    texts = [r["text"] for r in results]
+    assert len(texts) == 3
+    assert [t.startswith("Yesterday:") for t in texts] == [True, True, False]
+    assert "Lakers" in texts[1]
+
+
+@resp_lib.activate
 def test_sports_no_matching_team():
     resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
     resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
