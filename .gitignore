@@ -20,3 +20,4 @@ config/
 # Claude Code session data
 .claude/
 firstlight-claudecode-prompt.md
+firstlight-memory.md
