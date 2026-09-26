@@ -30,10 +30,11 @@ def get_scores(sports_config: dict, timezone_str: str = "America/Los_Angeles",
     Configured teams are resolved against the league roster to ESPN's numeric
     team id, and events are then matched on that id. The id is stable across
     rebrands; abbreviations and names are display labels ESPN revises freely,
-    which is how a team can silently stop matching.
+    which is how a team can silently stop matching. A config that already holds
+    ids skips the roster entirely.
 
-    If `warnings` is given, appends a one-line notice for any configured team
-    the roster does not recognize.
+    If `warnings` is given, appends a one-line notice for any configured *label*
+    ESPN's team list does not carry — a fault in the feed's data, not in ours.
     """
     try:
         local_tz = pytz.timezone(timezone_str)
@@ -121,21 +122,37 @@ def _resolve_teams(league: str, endpoint: str, teams: list,
                    warnings: list | None = None) -> set | None:
     """Resolve configured team labels to ESPN team ids.
 
-    Returns the set of ids to follow, or None when the roster is unavailable —
-    in which case the caller falls back to matching on labels, so a roster
-    outage degrades accuracy rather than emptying the digest.
+    A configured value that is already a numeric id is taken at face value and
+    never checked against the roster: the roster exists to translate human
+    labels, and an id needs no translation. Trusting it keeps a momentary gap in
+    ESPN's team list from disowning a team the picker itself wrote — on
+    2026-08-27 that list came back without the Lakers in it and the digest
+    accused the config of naming a team that does not exist.
+
+    Returns the set of ids to follow, or None when labels need translating and
+    the roster is unavailable — in which case the caller falls back to matching
+    on labels, so a roster outage degrades accuracy rather than emptying the
+    digest.
     """
+    resolved = {str(t).strip() for t in teams if str(t).strip().isdigit()}
+    labels = [t for t in teams if not str(t).strip().isdigit()]
+    if not labels:
+        return resolved  # nothing to translate — the roster is not needed
+
     index = _fetch_roster(endpoint)
     if index is None:
         return None
 
-    resolved = set()
-    for team in teams:
+    for team in labels:
         team_id = index.get(str(team).strip().lower())
         if team_id is None:
-            logging.warning("Configured %s team %r is not in the league roster", league, team)
+            logging.warning("ESPN's %s team list has no entry for configured team %r",
+                            league, team)
             if warnings is not None:
-                warnings.append(f"{league.upper()} team “{team}” not recognized")
+                warnings.append(
+                    f"{league.upper()}: ESPN's team list has no “{team}” "
+                    "— its scores will be missing"
+                )
         else:
             resolved.add(team_id)
     return resolved
@@ -223,9 +240,13 @@ def _format_event(event: dict, teams: list, local_tz, label: str | None,
         matched = bool(followed_ids & event_ids)
     else:
         # Roster unavailable — fall back to matching the labels themselves.
+        # Ids are matched here too, so a config that holds them still works
+        # through a roster outage.
         abbrevs = {c["team"].get("abbreviation", "").upper() for c in competitors if "team" in c}
         names = {c["team"].get("name", "").lower() for c in competitors if "team" in c}
-        matched = any(t.upper() in abbrevs or t.lower() in names for t in teams)
+        ids = {str(c["team"].get("id", "")) for c in competitors if "team" in c}
+        matched = any(t.upper() in abbrevs or t.lower() in names or t in ids
+                      for t in (str(x).strip() for x in teams))
 
     if not matched:
         return None

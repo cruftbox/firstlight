@@ -316,6 +316,8 @@ def test_sports_warns_on_unrecognized_team():
     assert len(warnings) == 1
     assert "NOPE" in warnings[0]
     assert "MLB" in warnings[0]
+    # The notice must read as bad data from ESPN, not as a config or parse error.
+    assert "ESPN" in warnings[0]
 
 
 @resp_lib.activate
@@ -430,6 +432,54 @@ def test_sports_scores_still_returned_when_team_unrecognized():
     results = get_scores({**EMPTY_SPORTS, "mlb": ["LAD", "NOPE"]}, warnings=warnings)
     assert len(results) == 1
     assert len(warnings) == 1
+
+
+# ── Configured ids are trusted over the roster ────────────────────────────────
+
+
+@resp_lib.activate
+def test_sports_id_config_does_not_fetch_the_roster():
+    """An id needs no translation, so the team list is never consulted."""
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=MLB_ROSTER, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    results = get_scores({**EMPTY_SPORTS, "mlb": ["19"]})
+    assert len(results) == 1
+    assert MLB_TEAMS_URL not in [c.request.url for c in resp_lib.calls]
+
+
+@resp_lib.activate
+def test_sports_id_survives_a_team_list_that_omits_it():
+    """2026-08-27: ESPN briefly served an NBA team list with no Lakers in it.
+
+    A configured id has to outlive a gap in the feed — the game is still
+    reported and nothing is blamed on the config.
+    """
+    partial = {"sports": [{"leagues": [{"teams": [
+        {"team": {"id": "26", "abbreviation": "SF", "name": "Giants"}},
+    ]}]}]}
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, json=partial, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    warnings = []
+    results = get_scores({**EMPTY_SPORTS, "mlb": ["19"]}, warnings=warnings)
+    assert len(results) == 1
+    assert warnings == []
+
+
+@resp_lib.activate
+def test_sports_id_still_matches_when_roster_unavailable():
+    """Mixed config through a roster outage: the label degrades, the id holds."""
+    resp_lib.add(resp_lib.GET, MLB_TEAMS_URL, status=500)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_FINAL, status=200)
+    resp_lib.add(resp_lib.GET, MLB_URL, json=MLB_NONE, status=200)
+    from app.providers.sports import get_scores
+    warnings = []
+    results = get_scores({**EMPTY_SPORTS, "mlb": ["19", "Mariners"]}, warnings=warnings)
+    assert len(results) == 1
+    assert warnings == []
 
 
 @resp_lib.activate

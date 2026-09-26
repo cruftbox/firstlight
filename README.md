@@ -276,7 +276,7 @@ Things you're most likely to change after initial setup:
 | `firstlight.printer_ip` | Printer's LAN IP address | `192.168.1.50` |
 | `location.city` | City name shown in weather header | `Chicago` |
 | `weather.units` | Temperature and wind units | `imperial` or `metric` |
-| `sports.mlb` | List of team abbreviations to follow | `[LAD, SF]` |
+| `sports.mlb` | Teams to follow: ESPN team ids (what the setup picker stores) or labels such as abbreviations | `['19', '26']` or `[LAD, SF]` |
 | `news.feeds` | RSS feed list (url + label per entry) | see above |
 | `news.max_items` | Total headlines per digest | `15` |
 
@@ -468,7 +468,7 @@ Failures in a self-hosted tool are normal. Here's how to diagnose the most commo
 
 - Each section only renders if its data provider returned something. Open the container logs during a print run (`docker compose logs -f firstlight`) and look for `WARNING` lines — each provider logs a warning when it fails.
 - **Weather missing:** check that your location lat/lon is set (Settings → Setup Wizard → Location).
-- **Sports missing:** confirm your team abbreviations match ESPN's — e.g. `LAD` not `Dodgers`. Check via Settings → Setup Wizard → Sports.
+- **Sports missing:** a team stored as an ESPN id (what the setup picker writes) is used as-is. A name or abbreviation is looked up in ESPN's team list, and the digest prints a notice when that list has no entry for it. Re-pick the team in Settings → Setup Wizard → Sports to store its id.
 - **Calendar missing:** the Google token may have expired or been revoked. Re-authorize via Settings → Setup Wizard → Calendar.
 - **News missing:** one or more RSS feeds may be unreachable or returning invalid data. Validate feed URLs via Settings → Setup Wizard → News Feeds.
 
