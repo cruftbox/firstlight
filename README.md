@@ -515,6 +515,8 @@ All provider failures, scheduler events, and print errors are logged there.
 
 Firstlight was built entirely using [Claude Code](https://claude.ai/code) with the [Superpowers](https://github.com/obra/superpowers) plugin. Superpowers provides structured workflow skills — brainstorming, planning, test-driven development, debugging — that guided the development process from initial design through implementation. The `docs/superpowers/` directory contains the implementation plans and design specs generated during that process. They are developer artifacts, not end-user documentation, but useful context if you want to understand the original design decisions or extend the project using the same workflow.
 
+The image is built on `python:3.12-slim` (Debian 13). See the comment at the top of the `Dockerfile` for why the apt install skips recommended packages.
+
 All development happens inside the container (WeasyPrint has no native Windows support):
 
 ```bash
