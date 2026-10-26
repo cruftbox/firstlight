@@ -50,7 +50,8 @@ def get_events(calendar_ids: list, day_offset: int = 0, timezone_str: str = "Ame
         for item in result.get("items", []):
             start = item.get("start", {})
             if "dateTime" in start:
-                dt = datetime.fromisoformat(start["dateTime"])
+                # Google returns each event in its calendar's own zone; show it in ours.
+                dt = datetime.fromisoformat(start["dateTime"]).astimezone(tz)
                 time_str = dt.strftime("%I:%M %p").lstrip("0") or "12:00 AM"
                 all_day = False
                 sort_key = dt.astimezone(timezone.utc)

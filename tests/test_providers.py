@@ -583,3 +583,26 @@ def test_calendar_returns_events_with_valid_credentials(tmp_path):
     assert events[1]["title"] == "Team standup"
     assert events[1]["all_day"] is False
     assert isinstance(events[1]["time"], str)
+
+
+def test_calendar_converts_event_time_to_configured_timezone():
+    from unittest.mock import MagicMock
+    mock_creds = MagicMock()
+    mock_creds.valid = True
+    mock_creds.expired = False
+
+    # An imported Outlook calendar set to UTC: 18:00Z is 11:00 AM Pacific.
+    mock_event_list = {
+        "items": [
+            {"summary": "Discuss report", "start": {"dateTime": "2026-10-26T18:00:00Z"}},
+        ]
+    }
+    mock_service = MagicMock()
+    mock_service.events.return_value.list.return_value.execute.return_value = mock_event_list
+
+    import app.providers.calendar as cal_mod
+    with _patch("app.providers.calendar._get_credentials", return_value=mock_creds), \
+         _patch("googleapiclient.discovery.build", return_value=mock_service):
+        events = cal_mod.get_events(["primary"], timezone_str="America/Los_Angeles")
+
+    assert events[0]["time"] == "11:00 AM"
